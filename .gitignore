@@ -8,3 +8,5 @@ data/
 .DS_Store
 venv/
 .env.local
+todo.md
+docs/screenshots/

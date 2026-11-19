@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>College Tracker</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+         max-width: 800px; margin: 40px auto; padding: 0 20px; color: #111;
+         line-height: 1.6; background: #fafafa; }
+  header { background: #0a7; color: #fff; padding: 24px; border-radius: 8px; margin-bottom: 24px; }
+  h1 { margin: 0; font-size: 1.75rem; }
+  .tag { background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 12px;
+         font-size: 0.85rem; margin-top: 10px; display: inline-block; }
+  .card { background: #fff; border: 1px solid #ddd; border-radius: 8px;
+          padding: 20px; margin-bottom: 16px; }
+  h2 { margin-top: 0; font-size: 1.15rem; color: #0a7; }
+  code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px;
+         font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9em; }
+  pre { background: #f5f5f5; padding: 12px 16px; border-radius: 6px;
+        overflow: auto; }
+  .btn { background: #0a7; color: #fff; text-decoration: none; padding: 10px 16px;
+         border-radius: 6px; display: inline-block; margin-top: 12px; }
+  .btn:hover { background: #085; }
+  .muted { color: #666; font-size: 0.9rem; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .screenshot { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+  .screenshot img { width: 100%; height: auto; display: block; }
+  .screenshot figcaption { padding: 8px 12px; font-size: 0.9rem; background: #f5f5f5; }
+</style>
+</head>
+<body>
+<header>
+  <h1>College Tracker</h1>
+  <p class="tag">Localhost dashboard &bull; Playwright &bull; Flask</p>
+  <p class="muted" style="margin-top:8px;">Logs into college portals and pulls registration-checklist data.</p>
+</header>
+
+<div class="card">
+  <h2>About</h2>
+  <p>College Tracker is a localhost website that logs into college portals using Playwright,
+  navigates to registration-checklist pages, and displays the extracted data. Credentials are
+  stored in <code>.env</code> (never committed). The list of websites to check lives in
+  <code>sites.json</code> and can be managed through the web UI.</p>
+</div>
+
+<div class="card">
+  <h2>Quick start</h2>
+  <pre><code># Windows
+.\setup.bat
+.venv\Scripts\python run.py
+# open http://127.0.0.1:5000</code></pre>
+</div>
+
+<div class="card">
+  <h2>Features</h2>
+  <ul>
+    <li>Flask dashboard on <code>http://127.0.0.1:5000</code></li>
+    <li>Playwright (Chromium) logs into each configured college portal</li>
+    <li>Extracts registration-checklist text and page titles</li>
+    <li>Add/remove tracked websites through the web UI (saved to <code>sites.json</code>)</li>
+    <li>Stored credentials in <code>.env</code> (gitignored)</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>Screenshots</h2>
+  <p class="muted">Dashboard and sites-management screenshots go here. Update these whenever the UI changes.</p>
+  <div class="grid">
+    <div class="screenshot">
+      <img src="screenshots/dashboard.png" alt="Dashboard">
+      <figcaption>Dashboard — latest scrape results + add-site form</figcaption>
+    </div>
+    <div class="screenshot">
+      <img src="screenshots/sites.png" alt="Sites management">
+      <figcaption>Sites page — add and delete tracked websites</figcaption>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>File layout</h2>
+  <pre><code>college-tracker/
+  app.py           # Flask website (localhost)
+  scraper.py       # Playwright login + checklist extraction
+  run.py           # Entrypoint
+  sites.json       # Websites to log into and check (committed)
+  .env.example     # Credential template (copy to .env, never commit)
+  docs/            # GitHub Pages site (this folder)
+  tests/           # mock HTML pages for end-to-end testing</code></pre>
+</div>
+
+<p class="muted" style="margin-top:24px;">&copy; College Tracker &mdash; localhost-only tool</p>
+</body>
+</html>
