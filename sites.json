@@ -1,9 +1,9 @@
 [
   {
-    "id": "registrar",
-    "name": "Registrar - Registration Checklist",
-    "login_url": "${COLLEGE_LOGIN_URL}",
-    "checklist_url": "${COLLEGE_CHECKLIST_URL}",
+    "id": "example-college",
+    "name": "Example College Portal",
+    "login_url": "http://127.0.0.1:8999/mock_login.html",
+    "checklist_url": "http://127.0.0.1:8999/mock_checklist.html",
     "user_env": "COLLEGE_USER",
     "pass_env": "COLLEGE_PASS",
     "selectors": {
@@ -12,7 +12,11 @@
       "submit": "button[type=\"submit\"], input[type=\"submit\"]"
     },
     "checklist_selectors": [
-      "main", "[role=\"main\"]", ".checklist", ".registration-checklist", "body"
+      "main",
+      "[role=\"main\"]",
+      ".checklist",
+      ".registration-checklist",
+      "body"
     ]
   }
 ]

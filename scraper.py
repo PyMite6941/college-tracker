@@ -133,6 +133,12 @@ def scrape_site(browser, site: dict) -> dict:
     return result
 
 
+def save_sites(sites: list[dict]) -> None:
+    """Persist the sites list to sites.json (used by the web UI)."""
+    with open(SITES_FILE, "w", encoding="utf-8") as fh:
+        json.dump(sites, fh, indent=2)
+
+
 def run_scrape(headless: bool = True) -> list[dict]:
     load_dotenv(ENV_FILE)
     sites = load_sites()

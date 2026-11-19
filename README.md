@@ -42,6 +42,18 @@ chmod +x setup.sh
 4. `app.py` is a Flask site on `http://127.0.0.1:5000` that shows the
    latest scrape results. Click **Run check now** to re-scrape.
 
+## Managing sites (web UI)
+
+You can add and remove websites without editing files by hand:
+
+- **Dashboard** (`/`) — click **Add a website to track** to save a new
+  site to `sites.json` through a form.
+- **Manage sites** (`/sites`) — view all configured sites and delete
+  ones you no longer need.
+
+Changes are saved to `sites.json` immediately. Credentials still live
+in `.env` (gitignored) and are referenced by `user_env` / `pass_env`.
+
 ## File layout
 
 ```
@@ -54,10 +66,11 @@ college-tracker/
   .gitignore
   requirements.txt
   setup.bat / setup.sh
+  tests/           # mock HTML pages for end-to-end testing
   data/            # runtime output: results.json (gitignored)
 ```
 
-## Adding a site
+## Adding a site manually
 
 Add an entry to `sites.json`:
 
