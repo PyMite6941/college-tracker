@@ -1,9 +1,13 @@
 # College Tracker
 
-Localhost website that logs into college portals with Playwright, pulls
-registration-checklist pages, and displays the results. Credentials are
-stored in `.env` (gitignored). The list of websites to check lives in
-`sites.json`.
+A local-first college planning dashboard. Today it can log into configured
+college portals with Playwright, pull registration-checklist pages, and show
+the results. The product is growing into one place to monitor authorized
+websites, manage application work, and plan campus visits.
+
+Credentials are currently read from `.env` (gitignored); website definitions
+live in `sites.json`. The broader roadmap is tracked in
+[GitHub Issues](https://github.com/PyMite6941/college-tracker/issues).
 
 ## Quick start — Windows (cmd / PowerShell)
 
@@ -51,6 +55,42 @@ chmod +x setup.sh run.sh
    `data/results.json`.
 4. `app.py` is a Flask site on `http://127.0.0.1:5000` that shows the
    latest scrape results. Click **Run check now** to re-scrape.
+
+## Product direction
+
+The goal is a personal college-planning hub, not an unrestricted bot for
+logging into arbitrary accounts. Checks should be read-only, configured by
+the user, and limited to accounts and sites the user is authorized to access.
+When a site requires MFA, a passkey, CAPTCHA, or renewed consent, the user
+should complete that step in a visible browser; the app must not bypass site
+security controls. Secrets and reusable browser sessions must stay local and
+out of Git.
+
+Planned work, in a suggested implementation order:
+
+1. [Harden local app and site configuration boundaries (#4)](https://github.com/PyMite6941/college-tracker/issues/4)
+2. [Add human-in-the-loop sign-in and safer session handling (#6)](https://github.com/PyMite6941/college-tracker/issues/6)
+3. [Support configurable read-only checks across authorized sites (#3)](https://github.com/PyMite6941/college-tracker/issues/3)
+4. [Track check history, content changes, and optional alerts (#1)](https://github.com/PyMite6941/college-tracker/issues/1)
+5. [Add application tasks, deadlines, and actionable source links (#5)](https://github.com/PyMite6941/college-tracker/issues/5)
+6. [Add college profiles and campus visit planning (#2)](https://github.com/PyMite6941/college-tracker/issues/2)
+
+### Campus visit planning
+
+The visit planner is planned, not implemented yet. It should let you save
+official campus-tour and admissions-event links, then track in-person or
+virtual visit dates, registration and confirmation status, travel notes,
+questions to ask, and follow-up tasks. It should also support college fairs
+and user-added map/directions links. College-specific registration URLs
+must come from the college's official site rather than being guessed, and
+reminders should be opt-in.
+
+Useful starting points:
+
+- [College Board: visiting a college](https://bigfuture.collegeboard.org/plan-for-college/college-search/visit-a-college)
+- [NACAC: college fairs](https://www.nacacnet.org/college-fairs/)
+- For a specific tour or event, use the college's official admissions or
+  campus-visit page and save that source URL with the visit.
 
 ## Managing sites (web UI)
 
@@ -112,5 +152,7 @@ Then add `MYCOLLEGE_USER` and `MYCOLLEGE_PASS` to `.env`.
   `sites.json` if the markup differs.
 - Set `PLAYWRIGHT_HEADLESS=false` in `.env` to watch the browser run
   (helpful for debugging logins).
-- This is built as a college tracker now; the scraper/app split keeps it
-  easy to repurpose later.
+- Use only on sites and accounts you are authorized to access, and respect
+  the site's terms and access controls.
+- The current credential-based login flow is limited; human-assisted
+  reauthentication and safer session handling are tracked in issue #6.

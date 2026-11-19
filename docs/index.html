@@ -33,15 +33,21 @@
 <header>
   <h1>College Tracker</h1>
   <p class="tag">Localhost dashboard &bull; Playwright &bull; Flask</p>
-  <p class="muted" style="margin-top:8px;">Logs into college portals and pulls registration-checklist data.</p>
+  <p class="muted" style="margin-top:8px;">A local-first hub for authorized portal checks, application work, and campus visit planning.</p>
 </header>
 
 <div class="card">
   <h2>About</h2>
-  <p>College Tracker is a localhost website that logs into college portals using Playwright,
-  navigates to registration-checklist pages, and displays the extracted data. Credentials are
-  stored in <code>.env</code> (never committed). The list of websites to check lives in
-  <code>sites.json</code> and can be managed through the web UI.</p>
+  <p>College Tracker currently logs into configured college portals using Playwright,
+  navigates to registration-checklist pages, and displays the extracted data. It is
+  evolving into a local-first college planning hub for authorized website checks,
+  application tasks, and campus visits. Credentials are stored in <code>.env</code>
+  (never committed). The list of websites to check lives in <code>sites.json</code>
+  and can be managed through the web UI.</p>
+  <p>Checks are intended to be read-only and limited to sites and accounts the user
+  is authorized to access. The app will not bypass MFA, passkeys, CAPTCHA, or other
+  site controls. Planned features are tracked in
+  <a href="https://github.com/PyMite6941/college-tracker/issues">GitHub Issues</a>.</p>
 </div>
 
 <div class="card">
@@ -61,6 +67,11 @@
     <li>Add/remove tracked websites through the web UI (saved to <code>sites.json</code>)</li>
     <li>Stored credentials in <code>.env</code> (gitignored)</li>
   </ul>
+  <p><strong>Planned:</strong> human-assisted sign-in, configurable read-only
+  checks, check history, application tasks and deadlines, and campus visit planning.
+  Visit planning will use official college links supplied by the user; useful
+  starting points are the <a href="https://bigfuture.collegeboard.org/plan-for-college/college-search/visit-a-college">College Board visit guide</a>
+  and <a href="https://www.nacacnet.org/college-fairs/">NACAC college fairs</a>.</p>
 </div>
 
 <div class="card">
