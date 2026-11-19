@@ -5,11 +5,11 @@ registration-checklist pages, and displays the results. Credentials are
 stored in `.env` (gitignored). The list of websites to check lives in
 `sites.json`.
 
-## Quick start (Windows)
+## Quick start — Windows (cmd / PowerShell)
 
 ```powershell
 .\setup.bat
-.venv\Scripts\python run.py
+.\run.bat
 # open http://127.0.0.1:5000
 ```
 
@@ -20,14 +20,24 @@ Or with the activated venv:
 python run.py
 ```
 
-## Quick start (macOS / Linux)
+## Quick start — macOS / Linux (bash / zsh)
 
 ```bash
-chmod +x setup.sh
+chmod +x setup.sh run.sh
 ./setup.sh
-.venv/bin/python run.py
+./run.sh
 # open http://127.0.0.1:5000
 ```
+
+### Scripts
+
+| Script | Platform | Purpose |
+|--------|----------|---------|
+| `setup.bat` | Windows | Create `.venv`, install deps + Playwright, create `.env` |
+| `setup.sh` | macOS / Linux | Same as `setup.bat` |
+| `run.bat` | Windows | Start the Flask site on localhost |
+| `run.sh` | macOS / Linux | Same as `run.bat` |
+| `run.py` | All | Python entrypoint (reads `HOST`/`PORT`/`FLASK_DEBUG` from `.env`) |
 
 ## How it works
 
@@ -60,12 +70,15 @@ in `.env` (gitignored) and are referenced by `user_env` / `pass_env`.
 college-tracker/
   app.py           # Flask website (localhost)
   scraper.py       # Playwright login + checklist extraction
-  run.py           # Entrypoint
+  run.py           # Python entrypoint (all platforms)
+  run.bat          # Windows: start the site
+  run.sh           # macOS / Linux: start the site
   sites.json       # Websites to log into and check (committed)
-  .env.example     # Credential template (copy to .env, never commit .env)
+  setup.bat        # Windows: one-command setup
+  setup.sh         # macOS / Linux: one-command setup
+  .env.example     # Credential template (copy to .env, never commit)
   .gitignore
   requirements.txt
-  setup.bat / setup.sh
   tests/           # mock HTML pages for end-to-end testing
   data/            # runtime output: results.json (gitignored)
 ```
