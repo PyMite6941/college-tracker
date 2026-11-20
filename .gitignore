@@ -10,3 +10,4 @@ venv/
 .env.local
 todo.md
 docs/screenshots/
+credentials.toml

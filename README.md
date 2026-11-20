@@ -104,6 +104,56 @@ You can add and remove websites without editing files by hand:
 Changes are saved to `sites.json` immediately. Credentials still live
 in `.env` (gitignored) and are referenced by `user_env` / `pass_env`.
 
+## Password manager integration (Chrome)
+
+Two ways to bring in credentials from Google Chrome:
+
+### 1. Import from Chrome's exported passwords CSV
+
+1. In Chrome, go to `chrome://settings/passwords` and click **Export passwords** to download a CSV.
+2. Open the College Tracker **Manage sites** page (`/sites`).
+3. Upload the CSV under **Import passwords from Chrome**.
+4. New sites are added to `sites.json` automatically.
+5. The import page shows `.env` lines to add — copy them into `.env` and fill in the real username/password values.
+
+### 2. Reuse Chrome's saved passwords via browser profile
+
+Set `CHROME_USER_DATA_DIR` in `.env` to your Chrome User Data directory
+(e.g. `C:/Users/<you>/AppData/Local/Google/Chrome/User Data` on Windows),
+then add `chrome_profile: "Default"` to a site entry in `sites.json`:
+
+```json
+{
+  "id": "mycollege",
+  "name": "My College Portal",
+  "login_url": "https://college.edu/login",
+  "checklist_url": "https://college.edu/student/registration-checklist",
+  "chrome_profile": "Default",
+  "selectors": { ... },
+  "checklist_selectors": [ "main", "body" ]
+}
+```
+
+**Or select a profile through the web UI:** open the **Manage sites** page
+(`/sites`), click **Auto-detect Chrome profiles** to find your installed
+profiles, choose one from the dropdown, and click **Select profile**. The
+choice is saved to `.env` as `CHROME_USER_DATA_DIR` and `CHROME_PROFILE`.
+
+When `CHROME_USER_DATA_DIR` is set, Playwright launches with your Chrome
+profile so Chrome's saved passwords and autofill are available. This works
+best in headed mode (`PLAYWRIGHT_HEADLESS=false`) so you can complete any
+MFA/CAPTCHA steps yourself. Chrome must be closed for Playwright to use its
+profile.
+
+### Security notes
+
+- `.env` is gitignored — never commit it.
+- Chrome's `Login Data` database is encrypted (DPAPI on Windows, Keychain
+  on macOS). This project does **not** read that database directly; it
+  either imports from your manually exported CSV or reuses Chrome's profile
+  through Playwright so Chrome handles decryption.
+- Only import from sites and accounts you own and are authorized to access.
+
 ## File layout
 
 ```

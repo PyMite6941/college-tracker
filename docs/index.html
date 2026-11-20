@@ -75,7 +75,59 @@
 </div>
 
 <div class="card">
-  <h2>Screenshots</h2>
+  <h2>Password manager (Chrome)</h2>
+  <p>Two ways to bring credentials in from Google Chrome:</p>
+  <h3>1. Import from Chrome's exported passwords CSV</h3>
+  <ol>
+    <li>In Chrome, go to <code>chrome://settings/passwords</code> and click <strong>Export passwords</strong> to download a CSV.</li>
+    <li>Open the College Tracker <strong>Manage sites</strong> page (<code>/sites</code>).</li>
+    <li>Upload the CSV under <strong>Import passwords from Chrome</strong>.</li>
+    <li>New sites are added to <code>sites.json</code> automatically.</li>
+    <li>The import page shows <code>.env</code> lines to add — copy them into <code>.env</code> and fill in real values.</li>
+  </ol>
+  <h3>2. Reuse Chrome's saved passwords via browser profile</h3>
+  <p>Set <code>CHROME_USER_DATA_DIR</code> in <code>.env</code> to your Chrome User Data directory
+  (e.g. <code>C:\Users\&lt;you&gt;\AppData\Local\Google\Chrome\User Data</code> on Windows),
+  then add <code>chrome_profile: "Default"</code> to a site entry in <code>sites.json</code>:</p>
+  <pre><code>{
+  "id": "mycollege",
+  "name": "My College Portal",
+  "login_url": "https://college.edu/login",
+  "checklist_url": "https://college.edu/student/registration-checklist",
+  "chrome_profile": "Default",
+  "selectors": { ... },
+  "checklist_selectors": [ "main", "body" ]
+}</code></pre>
+  <p>When <code>CHROME_USER_DATA_DIR</code> is set, Playwright launches with your Chrome
+  profile so Chrome's saved passwords and autofill are available. This works best
+  in headed mode (<code>PLAYWRIGHT_HEADLESS=false</code>) so you can complete any
+  MFA/CAPTCHA steps yourself.</p>
+  <p class="muted"><strong>Security:</strong> <code>.env</code> is gitignored — never commit it.
+  This project does not read Chrome's encrypted Login Data database directly; it
+  either imports from your manually exported CSV or reuses Chrome's profile through
+  Playwright so Chrome handles decryption. Only import from sites and accounts you
+  own and are authorized to access.</p>
+</div>
+
+<div class="card">
+  <h2>Chrome profile selection (web UI)</h2>
+  <p>Open the <strong>Manage sites</strong> page (<code>/sites</code>) to
+  auto-detect and select a Chrome profile:</p>
+  <ol>
+    <li>Click <strong>Auto-detect Chrome profiles</strong> — the app reads
+    Chrome's Local State file and lists all installed profiles
+    (Default, Profile 1, etc.) with their display names and account emails.</li>
+    <li>Choose a profile from the dropdown.</li>
+    <li>Click <strong>Select profile</strong> — the choice is saved to
+    <code>.env</code> as <code>CHROME_USER_DATA_DIR</code> and
+    <code>CHROME_PROFILE</code>.</li>
+  </ol>
+  <p class="muted">Chrome must be closed for Playwright to use its profile.
+  If Chrome is running, close it first.</p>
+</div>
+
+<div class="card">
+   <h2>Screenshots</h2>
   <p class="muted">Dashboard and sites-management screenshots go here. Update these whenever the UI changes.</p>
   <div class="grid">
     <div class="screenshot">
