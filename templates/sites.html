@@ -39,7 +39,7 @@ Site definitions are saved to <code>sites.json</code>; passwords and sessions st
       <div class="actions"><button type="submit">Save locally</button></div>
     </form>
     {% if s.creds_in_toml %}{{ post_button(url_for('delete_site_credentials', site_id=s.id), 'Remove saved credentials', 'danger small', confirm='Remove saved credentials?') }}{% endif %}
-    <p class="hint">Saved in plain text to <code>credentials.toml</code> on this computer (gitignored). Prefer “manual” sign-in if the site supports SSO or MFA.</p>
+    <p class="hint">{% if cred_store == 'keyring' %}Password saved in your OS keyring; username in <code>credentials.toml</code> (gitignored).{% else %}Saved in plain text to <code>credentials.toml</code> on this computer (gitignored). Set <code>CREDENTIAL_STORE=keyring</code> to use your OS keyring.{% endif %} Prefer “manual” sign-in if the site supports SSO or MFA.</p>
   </details>
   {% endif %}
 </div>

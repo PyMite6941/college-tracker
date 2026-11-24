@@ -101,6 +101,7 @@ def create_app(testing: bool = False) -> Flask:
             "today": planner.today(),
             "nav": request.endpoint or "",
             "open_alert_count": len(history.open_alerts()),
+            "cred_store": scraper.credential_store(),
         }
 
     @app.template_filter("when")
@@ -149,6 +150,12 @@ def create_app(testing: bool = False) -> Flask:
     @app.errorhandler(413)
     def too_large(err):
         return render_template("error.html", code=413, message="That upload is too large (2 MB max)."), 413
+
+    @app.errorhandler(ConfigError)
+    def config_error(err):
+        # Any validation/config problem not handled by a route: show it, don't 500.
+        flash(str(err), "error")
+        return back(request.referrer and safe_next(request.referrer.split(request.host, 1)[-1], "/") or "/")
 
     def back(default: str = "/"):
         return redirect(safe_next(request.form.get("next") or request.args.get("next"), default))
@@ -888,6 +895,7 @@ def create_app(testing: bool = False) -> Flask:
                                max_days=os.getenv("HISTORY_MAX_DAYS", "90"),
                                session_days=os.getenv("SESSION_MAX_AGE_DAYS", "14"),
                                allow_local=env_flag("ALLOW_LOCAL_TARGETS"),
+                               keyring_ok=scraper.keyring_available(),
                                headless=headless())
 
     @app.post("/settings/test-notification")

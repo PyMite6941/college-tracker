@@ -15,7 +15,7 @@ echo [4/4] Installing Playwright browsers...
 .venv\Scripts\python -m playwright install chromium
 
 if not exist .env (
-    echo Creating .env from .env.example (fill in your credentials before running)...
+    echo Creating .env from .env.example ^(settings only; add sites and logins in the web UI^)...
     copy .env.example .env
 ) else (
     echo .env already exists, leaving it untouched.
@@ -24,3 +24,4 @@ if not exist .env (
 echo.
 echo Setup complete. Run:  .venv\Scripts\python run.py
 echo Then open:            http://127.0.0.1:5000
+echo Tests (optional):     uv pip install -r requirements-dev.txt --python .venv ^&^& .venv\Scripts\python -m pytest

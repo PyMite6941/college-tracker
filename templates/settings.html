@@ -39,6 +39,13 @@
     {{ post_button(url_for('test_notification'), 'Send test notification', 'secondary small') }}
   </section>
   <section class="card">
+    <h3>Saved passwords</h3>
+    <dl class="kv"><dt>Stored in</dt><dd>{{ 'OS keyring' if cred_store == 'keyring' else 'credentials.toml (plain text)' }} <code>CREDENTIAL_STORE</code></dd>
+      <dt>OS keyring</dt><dd>{{ 'available' if keyring_ok else 'not available' }}</dd></dl>
+    <p class="small muted">Set <code>CREDENTIAL_STORE=keyring</code> in <code>.env</code>, restart, then run <code>python run.py secure</code>
+      to move existing passwords out of the file.</p>
+  </section>
+  <section class="card">
     <h3>History retention</h3>
     <dl class="kv"><dt>Max runs per check</dt><dd>{{ max_runs }} <code>HISTORY_MAX_RUNS</code></dd>
       <dt>Max age</dt><dd>{{ max_days }} days <code>HISTORY_MAX_DAYS</code> (0 = forever)</dd></dl>

@@ -9,6 +9,7 @@ non-loopback address unless ALLOW_REMOTE=1 (see SECURITY.md).
     python run.py remind    record due reminders (for a scheduled task)
     python run.py email     sync college email once (read-only IMAP)
     python run.py auto      run whatever Settings -> Automation says is due, then exit
+    python run.py secure    move saved passwords to match CREDENTIAL_STORE (keyring or file)
 """
 from __future__ import annotations
 
@@ -44,6 +45,15 @@ def cli(argv: list[str]) -> int:
         finally:
             scheduler.mark_run("email")
         print(f"{out['added']} new, {out['matched']} college message(s).")
+        return 0
+    if cmd == "secure":
+        import scraper
+        out = scraper.migrate_credentials()
+        if out["store"] == "keyring" and not out["keyring_available"]:
+            print("No OS keyring is available; passwords stay in credentials.toml.")
+            return 1
+        where = "the OS keyring" if out["store"] == "keyring" else "credentials.toml (plain text)"
+        print(f"{out['sites']} site password(s){' and the email password' if out['imap'] else ''} now stored in {where}.")
         return 0
     if cmd == "auto":
         import os

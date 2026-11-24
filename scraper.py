@@ -308,59 +308,154 @@ def _encode_toml_string(value: str) -> str:
     return f'"{escaped}"'
 
 
-def load_credentials() -> dict[str, dict]:
-    """Load saved credentials keyed by site id: {username, password, profile}."""
+KEYRING_SERVICE = "college-tracker"
+KEYRING_MARKER = "keyring"
+
+
+def credential_store() -> str:
+    """'keyring' (OS credential vault) or 'file' (plain text in credentials.toml)."""
+    return "keyring" if os.getenv("CREDENTIAL_STORE", "file").strip().lower() == "keyring" else "file"
+
+
+def _keyring():
+    try:
+        import keyring  # optional dependency
+        return keyring
+    except ImportError:
+        return None
+
+
+def keyring_available() -> bool:
+    kr = _keyring()
+    if kr is None:
+        return False
+    try:
+        from keyring.backends import fail
+        return not isinstance(kr.get_keyring(), fail.Keyring)
+    except Exception:
+        return False
+
+
+def _kr_name(kind: str, key: str = "") -> str:
+    return f"{kind}:{key}" if key else kind
+
+
+def _kr_get(name: str) -> str:
+    kr = _keyring()
+    if kr is None:
+        return ""
+    try:
+        return kr.get_password(KEYRING_SERVICE, name) or ""
+    except Exception:
+        return ""
+
+
+def _kr_set(name: str, password: str) -> bool:
+    kr = _keyring()
+    if kr is None or not keyring_available():
+        return False
+    try:
+        kr.set_password(KEYRING_SERVICE, name, password)
+        return True
+    except Exception as exc:
+        print(f"Keyring unavailable ({exc.__class__.__name__}); keeping the password in credentials.toml.",
+              file=sys.stderr)
+        return False
+
+
+def _kr_delete(name: str) -> None:
+    kr = _keyring()
+    if kr is None:
+        return
+    try:
+        kr.delete_password(KEYRING_SERVICE, name)
+    except Exception:
+        pass
+
+
+def _read_credentials_toml() -> dict:
     path = credentials_file()
     if not path.exists() or tomllib is None:
         return {}
     try:
         with open(path, "rb") as fh:
-            data = tomllib.load(fh)
+            return tomllib.load(fh)
     except (OSError, tomllib.TOMLDecodeError):
         return {}
-    creds = {k: v for k, v in (data.get("sites") or {}).items() if isinstance(v, dict)}
+
+
+def _resolve_password(entry: dict, name: str) -> dict:
+    entry = dict(entry)
+    if entry.get("password_store") == KEYRING_MARKER:
+        entry["password"] = _kr_get(name)
+    entry.pop("password_store", None)
+    return entry
+
+
+def load_credentials() -> dict[str, dict]:
+    """Saved credentials keyed by site id: {username, password, profile}.
+
+    Passwords marked ``password_store = "keyring"`` are fetched from the OS
+    credential vault (Windows Credential Manager, macOS Keychain, Secret Service).
+    """
+    data = _read_credentials_toml()
+    raw = {k: v for k, v in (data.get("sites") or {}).items() if isinstance(v, dict)}
     # Files written by older versions put each site in a top-level table.
     for k, v in data.items():
         if k not in ("sites", "imap") and isinstance(v, dict) and "password" in v:
-            creds.setdefault(k, v)
-    return creds
+            raw.setdefault(k, v)
+    return {k: _resolve_password(v, _kr_name("site", k)) for k, v in raw.items()}
 
 
 def load_imap_settings() -> dict:
     """The [imap] table of credentials.toml (email sync account), or {}."""
-    path = credentials_file()
-    if not path.exists() or tomllib is None:
-        return {}
-    try:
-        with open(path, "rb") as fh:
-            data = tomllib.load(fh)
-    except (OSError, tomllib.TOMLDecodeError):
-        return {}
-    imap = data.get("imap")
-    return dict(imap) if isinstance(imap, dict) else {}
+    imap = _read_credentials_toml().get("imap")
+    return _resolve_password(imap, _kr_name("imap")) if isinstance(imap, dict) else {}
 
 
 def save_imap_settings(settings: dict | None) -> None:
     """Replace (or with None, remove) the [imap] table, keeping site credentials."""
+    if not settings:
+        _kr_delete(_kr_name("imap"))
     _write_credentials(load_credentials(), imap=settings or {})
 
 
+def _password_line(password: str, name: str, indent: str) -> str:
+    """Store in the keyring when enabled (falls back to the file if the vault fails)."""
+    if password and credential_store() == "keyring" and _kr_set(name, password):
+        return f'{indent}password_store = "{KEYRING_MARKER}"'
+    if credential_store() != "keyring":
+        _kr_delete(name)  # switched back to file storage: don't leave stale copies behind
+    return f"{indent}password = {_encode_toml_string(password)}"
+
+
 def _write_credentials(creds: dict, imap: dict | None = None) -> None:
+    path = credentials_file()
+    if path.exists() and tomllib is not None:
+        try:
+            with open(path, "rb") as fh:
+                tomllib.load(fh)
+        except tomllib.TOMLDecodeError:
+            raise ConfigError(f"{path.name} isn't valid TOML, so it was left untouched. "
+                              "Fix or remove it, then try again.") from None
     if imap is None:
         imap = load_imap_settings()
-    lines = ["# College Tracker saved credentials. Plain text, local only, gitignored."]
+    where = "OS keyring" if credential_store() == "keyring" else "plain text"
+    lines = [f"# College Tracker saved credentials (passwords: {where}). Local only, gitignored."]
     if imap:
         lines.append("[imap]")
-        for key in ("host", "port", "username", "password", "folder", "days"):
+        for key in ("host", "port", "username", "folder", "days"):
             if key in imap and imap[key] not in (None, ""):
                 val = imap[key]
                 lines.append(f"  {key} = {val}" if isinstance(val, int) else f"  {key} = {_encode_toml_string(str(val))}")
+        if imap.get("password"):
+            lines.append(_password_line(imap["password"], _kr_name("imap"), "  "))
         lines.append("")
     lines.append("[sites]")
     for sid, entry in sorted(creds.items()):
         lines.append(f"  [sites.{_encode_toml_string(sid)}]")
         lines.append(f"    username = {_encode_toml_string(entry.get('username', ''))}")
-        lines.append(f"    password = {_encode_toml_string(entry.get('password', ''))}")
+        lines.append(_password_line(entry.get("password", ""), _kr_name("site", sid), "    "))
         if entry.get("profile"):
             lines.append(f"    profile = {_encode_toml_string(entry['profile'])}")
         lines.append("")
@@ -368,6 +463,15 @@ def _write_credentials(creds: dict, imap: dict | None = None) -> None:
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
     restrict_permissions(path)
+
+
+def migrate_credentials() -> dict:
+    """Rewrite credentials.toml with the current CREDENTIAL_STORE setting."""
+    creds, imap = load_credentials(), load_imap_settings()
+    if creds or imap:
+        _write_credentials(creds, imap=imap)
+    return {"store": credential_store(), "sites": len(creds), "imap": bool(imap),
+            "keyring_available": keyring_available()}
 
 
 def save_credentials(site_id: str, username: str, password: str, profile: str | None = None) -> None:
@@ -384,6 +488,7 @@ def delete_credentials(site_id: str) -> bool:
     if site_id not in creds:
         return False
     del creds[site_id]
+    _kr_delete(_kr_name("site", site_id))
     _write_credentials(creds)
     return True
 

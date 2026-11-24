@@ -28,7 +28,7 @@ A local-first college planning hub. It runs on your own computer at
   JSON), plus a `.ics` calendar export.
 
 All data stays on your machine. Read [SECURITY.md](SECURITY.md) for the
-trust boundary.
+trust boundary. Project site: <https://pymite6941.github.io/college-tracker/>
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
@@ -65,6 +65,7 @@ The setup scripts use [uv](https://github.com/astral-sh/uv). They create
 | `python run.py check` | Run every check once from the terminal (exit code 1 if any check is not OK) |
 | `python run.py remind` | Record due reminders and send notifications, for Task Scheduler or cron |
 | `python run.py email` | Sync college email once (read-only) |
+| `python run.py secure` | Move saved passwords into the OS keyring (or back), matching `CREDENTIAL_STORE` |
 | `python run.py auto` | Run whatever Settings → Automation says is due, then exit (for Task Scheduler or cron) |
 | `python scripts/screenshots.py` | Regenerate `docs/screenshots/` from fictional demo data |
 | `python -m pytest` | Run the tests (install `requirements-dev.txt` first) |
@@ -157,7 +158,7 @@ run is compared with the last *OK* run.
 |---|---|---|
 | `sites.json` | yes | Sites and their checks. No secrets. Editable from the UI. |
 | `.env` | **no** | Settings (see `.env.example`) |
-| `credentials.toml` | **no** | Saved usernames and passwords (plain text, local) |
+| `credentials.toml` | **no** | Saved usernames, and passwords unless `CREDENTIAL_STORE=keyring` |
 | `data/` | **no** | Results, history, alerts, planner records, saved sessions, stored college email, automation settings |
 
 ### `sites.json` format
