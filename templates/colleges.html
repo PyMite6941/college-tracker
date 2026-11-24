@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, ext with context %}
+{% block title %}Colleges — College Tracker{% endblock %}
+{% block content %}
+<h1>Colleges</h1>
+<p class="muted">Your college list. Links are the official pages you supply — the app never looks them up or guesses them.</p>
+{% if colleges %}
+<div class="card table-scroll"><table>
+  <thead><tr><th>College</th><th class="hide-sm">Location</th><th>Official links</th><th>Visits</th><th>Open tasks</th></tr></thead>
+  <tbody>
+  {% for c in colleges %}
+  <tr>
+    <td><a href="{{ url_for('college', college_id=c.id) }}"><b>{{ c.name }}</b></a></td>
+    <td class="hide-sm">{{ c.location or '—' }}</td>
+    <td class="small">{{ ext(c.admissions_url, 'Admissions') }}{% if c.admissions_url and c.visit_url %} · {% endif %}{{ ext(c.visit_url, 'Visits') }}{% if not c.admissions_url and not c.visit_url %}<span class="hint">none yet</span>{% endif %}</td>
+    <td>{{ counts[c.id].visits }}</td>
+    <td>{{ counts[c.id].tasks }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<p class="notice">No colleges yet. Add the first one below.</p>
+{% endif %}
+
+<h2>Add a college</h2>
+<form class="card" method="post" action="{{ url_for('add_college') }}">
+  {{ csrf() }}
+  {% set c = {} %}
+  {% include "_college_fields.html" %}
+  <div class="actions"><button type="submit">Add college</button></div>
+</form>
+{% endblock %}

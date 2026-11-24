@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import visit_line with context %}
+{% block title %}Visits — College Tracker{% endblock %}
+{% block content %}
+<div class="row spread">
+  <div><h1>Visits &amp; events</h1>
+  <p class="muted">Campus tours, open houses, info sessions, class visits, virtual tours and college fairs. Planning only — register on each college's official page.</p></div>
+  <div class="row"><a class="btn" href="{{ url_for('new_visit') }}">Plan a visit</a><a class="btn secondary" href="{{ url_for('calendar') }}">Download calendar (.ics)</a></div>
+</div>
+<p class="row small">Show:
+  <a href="{{ url_for('visits', show='upcoming') }}" class="pill {{ 'ok' if show == 'upcoming' }}">Active</a>
+  <a href="{{ url_for('visits', show='past') }}" class="pill {{ 'ok' if show == 'past' }}">Past &amp; closed</a>
+  <a href="{{ url_for('visits', show='all') }}" class="pill {{ 'ok' if show == 'all' }}">All</a></p>
+<div class="card">
+{% if visits %}
+  <ul class="list">{% for v in visits %}<li>{{ visit_line(v, colleges) }}
+    {% if v.status not in ['completed', 'cancelled'] and P.visit_is_past(v, now) %}<div class="small"><span class="pill warn">Date passed — mark completed or cancelled</span></div>{% endif %}
+  </li>{% endfor %}</ul>
+{% else %}<p class="empty">Nothing here.</p>{% endif %}
+</div>
+{% endblock %}

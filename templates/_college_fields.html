@@ -1,0 +1,11 @@
+<div class="fields">
+  <div><label>College name</label><input name="name" value="{{ c.name or '' }}" required></div>
+  <div><label>Location <span class="hint">optional</span></label><input name="location" value="{{ c.location or '' }}" placeholder="City, State"></div>
+  <div><label>Official admissions URL <span class="hint">from the college's own site</span></label><input type="url" name="admissions_url" value="{{ c.admissions_url or '' }}" placeholder="https://admissions.example.edu"></div>
+  <div><label>Official visit / tour page <span class="hint">optional</span></label><input type="url" name="visit_url" value="{{ c.visit_url or '' }}"></div>
+  <div><label>Email domains <span class="hint">who emails you — comma-separated</span></label>
+    <input name="email_domains" value="{{ (c.email_domains or [])|join(', ') }}" placeholder="{{ P.suggest_domain(c.admissions_url) or 'northfield.edu' }}"></div>
+  {% if sites %}<div><label>Portal site <span class="hint">optional</span></label>
+    <select name="portal_site_id"><option value="">—</option>{% for s in sites %}<option value="{{ s.id }}" {{ 'selected' if c.portal_site_id == s.id }}>{{ s.name }}</option>{% endfor %}</select></div>{% endif %}
+</div>
+<label>Notes</label><textarea name="notes">{{ c.notes or '' }}</textarea>

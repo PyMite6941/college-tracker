@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ext, status_pill with context %}
+{% block title %}History: {{ check.name }} — College Tracker{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('edit_site', site_id=site.id) }}">&larr; {{ site.name }}</a></p>
+<h1>{{ check.name }}</h1>
+<p class="muted">{{ ext(check.url) }} · keeping up to {{ max_runs }} runs{% if max_days != '0' %} from the last {{ max_days }} days{% endif %}
+(set <code>HISTORY_MAX_RUNS</code> / <code>HISTORY_MAX_DAYS</code> in .env).
+{% if check.watch %}Watching for: <b>{{ check.watch|join(', ') }}</b>.{% endif %}</p>
+<p class="muted small">Errors (sign-in, network, configuration) are listed but never counted as content changes;
+each successful run is compared with the previous successful run.</p>
+
+{% for r in runs %}
+<div class="card">
+  <div class="row spread">
+    <div>{{ status_pill(r.status) }}
+      {% if r.status == 'ok' %}{% if r.diff %}<span class="pill info">Changed</span>{% elif loop.last %}<span class="pill">First run</span>{% else %}<span class="pill">No change</span>{% endif %}{% endif %}
+      <b>{{ r.checked_at|when }}</b></div>
+    <span class="muted small">{{ r.title or '' }}</span>
+  </div>
+  {% if r.error %}<div class="flash error small mt">{{ r.error }}</div>{% endif %}
+  {% if r.diff %}<div class="diff">{% for d in r.diff %}<div class="{{ 'add' if d.op == '+' else 'del' if d.op == '-' else 'gap' if d.op == '…' else '' }}">{{ d.op }} {{ d.text }}</div>{% endfor %}</div>{% endif %}
+  {% if r.excerpt %}<details class="mt"><summary>Page text</summary><pre>{{ r.excerpt }}</pre></details>{% endif %}
+</div>
+{% else %}
+<p class="notice">No runs yet.</p>
+{% endfor %}
+{% endblock %}

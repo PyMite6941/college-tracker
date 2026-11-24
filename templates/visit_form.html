@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf with context %}
+{% block title %}{{ 'Edit visit' if visit else 'Plan a visit' }} — College Tracker{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('visit', visit_id=visit.id) if visit else url_for('visits') }}">&larr; Back</a></p>
+<h1>{{ 'Edit visit' if visit else 'Plan a visit or event' }}</h1>
+{% if not colleges %}<p class="notice">Add a college first on the <a href="{{ url_for('colleges') }}">Colleges</a> page.</p>{% endif %}
+<form class="card" method="post" action="{{ url_for('update_visit', visit_id=visit.id) if visit else url_for('create_visit') }}">
+  {{ csrf() }}
+  <fieldset><legend>Event</legend>
+  <div class="fields">
+    <div><label>College</label><select name="college_id" required><option value="">— choose —</option>
+      {% for c in colleges %}<option value="{{ c.id }}" {{ 'selected' if v.college_id == c.id }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div><label>Event name</label><input name="title" value="{{ v.title or '' }}" required placeholder="Fall open house"></div>
+    <div><label>Type</label><select name="kind">{% for k, l in P.VISIT_KINDS.items() %}<option value="{{ k }}" {{ 'selected' if v.kind == k }}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label>Format</label><select name="format">{% for k, l in P.VISIT_FORMATS.items() %}<option value="{{ k }}" {{ 'selected' if v.format == k }}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label>Date</label><input type="date" name="date" value="{{ v.date or '' }}" required></div>
+    <div><label>Start time <span class="hint">optional</span></label><input type="time" name="start_time" value="{{ v.start_time or '' }}"></div>
+    <div><label>End time <span class="hint">optional</span></label><input type="time" name="end_time" value="{{ v.end_time or '' }}"></div>
+    <div><label>Time zone</label><input name="timezone" list="tzlist" value="{{ v.timezone or '' }}" placeholder="America/New_York">
+      <datalist id="tzlist">{% for tz in timezones %}<option value="{{ tz }}">{% endfor %}</datalist></div>
+  </div>
+  </fieldset>
+  <fieldset><legend>Registration</legend>
+  <div class="fields">
+    <div><label>Official event / registration page <span class="hint">required — copy it from the college's site</span></label>
+      <input type="url" name="source_url" value="{{ v.source_url or '' }}" required placeholder="https://admissions.example.edu/visit"></div>
+    <div><label>Status</label><select name="status">{% for k, l in P.RSVP_STATES.items() %}<option value="{{ k }}" {{ 'selected' if (v.status or 'planned') == k }}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label>Confirmation details <span class="hint">number, email subject…</span></label><input name="confirmation" value="{{ v.confirmation or '' }}"></div>
+  </div>
+  <p class="hint">The app never registers you or submits forms — it only keeps your record.</p>
+  </fieldset>
+  <fieldset><legend>Where &amp; how</legend>
+  <div class="fields">
+    <div><label>Location / meeting point</label><input name="location" value="{{ v.location or '' }}" placeholder="Admissions Center, 2nd floor"></div>
+    <div><label>Map / directions link <span class="hint">your own link</span></label><input type="url" name="directions_url" value="{{ v.directions_url or '' }}"></div>
+    <div><label>Meeting link <span class="hint">virtual events</span></label><input type="url" name="meeting_url" value="{{ v.meeting_url or '' }}"></div>
+    <div><label>Estimated cost ($)</label><input name="estimated_cost" value="{{ v.estimated_cost if v.estimated_cost is not none else '' }}" inputmode="decimal"></div>
+  </div>
+  <label>Travel, lodging &amp; logistics</label><textarea name="logistics">{{ v.logistics or '' }}</textarea>
+  <label>Accessibility needs</label><textarea name="accessibility">{{ v.accessibility or '' }}</textarea>
+  </fieldset>
+  <fieldset><legend>Preparation</legend>
+  <label>Prep checklist <span class="hint">one item per line</span></label>
+  <textarea name="prep" placeholder="Register online&#10;Book parking&#10;Bring transcript copy">{{ (v.prep or [])|map(attribute='text')|join('\n') }}</textarea>
+  <label>Questions to ask <span class="hint">one per line</span></label>
+  <textarea name="questions">{{ (v.questions or [])|join('\n') }}</textarea>
+  </fieldset>
+  <fieldset><legend>After the visit</legend>
+  <label>Notes</label><textarea name="notes">{{ v.notes or '' }}</textarea>
+  <label>Contacts <span class="hint">admissions counselor, tour guide…</span></label><textarea name="contacts">{{ v.contacts or '' }}</textarea>
+  <label>Follow-ups <span class="hint">one per line</span></label>
+  <textarea name="followups" placeholder="Send thank-you email&#10;Request interview">{{ (v.followups or [])|map(attribute='text')|join('\n') }}</textarea>
+  </fieldset>
+  <fieldset><legend>Reminder (opt-in)</legend>
+    <label class="check"><input type="checkbox" name="remind" {{ 'checked' if v.remind }}> Remind me before this visit</label>
+    <label>Days before</label><input type="number" min="0" max="60" name="remind_days" value="{{ v.remind_days if v.remind_days is not none else 3 }}">
+  </fieldset>
+  <div class="actions"><button type="submit">Save visit</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, post_button with context %}
+{% block title %}Email filters — College Tracker{% endblock %}
+{% block content %}
+<a href="{{ url_for('email_page') }}">← College email</a>
+<h1>Email filters &amp; setup</h1>
+<p class="muted">Mail is matched to a college by the <b>email domains</b> on each college profile, then sorted into a category with the keyword rules below.</p>
+
+<div class="grid">
+  <section class="card">
+    <h3>1. Gmail filters (no password needed)</h3>
+    <p class="small">Gmail labels your college mail itself, as <code>College/&lt;college&gt;</code> and <code>College/&lt;category&gt;</code>.
+      Filters only add labels and “never send to spam”. Nothing is deleted, archived or forwarded.</p>
+    <form method="get" action="{{ url_for('gmail_filters') }}" class="stack">
+      <label>Label prefix <input name="prefix" value="College" maxlength="40"></label>
+      <label class="check"><input type="checkbox" name="colleges" value="1" checked> One label per college</label>
+      <label class="check"><input type="checkbox" name="categories" value="1" checked> One label per category</label>
+      <div><button type="submit" {{ 'disabled' if not filters }}>Download Gmail filters (.xml)</button></div>
+    </form>
+    <p class="small muted mt">Import in Gmail: <b>Settings → See all settings → Filters and Blocked Addresses → Import filters</b>.
+      Tick “Apply new filters to existing email” to sort old mail too. Download again after adding colleges or editing rules.</p>
+    {% if not filters %}<p class="small"><span class="pill warn">No domains</span> Add email domains to your colleges first.</p>{% endif %}
+  </section>
+
+  <section class="card">
+    <h3>2. Inbox sync (optional, read-only)</h3>
+    <p class="small">Reads recent mail over IMAP (TLS) with the folder opened read-only. Only messages from your colleges'
+      domains are kept, as subject plus a short snippet, in <code>data/emails.json</code>. Everything else is skipped.</p>
+    <form method="post" action="{{ url_for('email_account') }}" class="fields">
+      {{ csrf() }}
+      <div><label>IMAP host</label><input name="host" value="{{ cfg.host }}" placeholder="imap.gmail.com" required></div>
+      <div><label>Port</label><input name="port" value="{{ cfg.port }}" inputmode="numeric"></div>
+      <div><label>Email address</label><input name="username" value="{{ cfg.username }}" autocomplete="off" required></div>
+      <div><label>App password <span class="hint">{{ 'saved — leave blank to keep' if cfg.password else 'not your normal password' }}</span></label>
+        <input name="password" type="password" autocomplete="new-password"></div>
+      <div><label>Folder</label><input name="folder" value="{{ cfg.folder }}"></div>
+      <div><label>Days to look back</label><input name="days" value="{{ cfg.days }}" inputmode="numeric"></div>
+      <div class="row"><button type="submit">Save account</button></div>
+    </form>
+    {% if cfg.configured %}
+    <div class="row mt">
+      {{ post_button(url_for('email_account_test'), 'Test connection') }}
+      {{ post_button(url_for('email_sync'), 'Sync now', 'small') }}
+      {{ post_button(url_for('email_account_delete'), 'Remove account', 'danger small', confirm='Remove the saved email account?') }}
+    </div>
+    {% endif %}
+    <p class="small muted mt">Gmail: turn on 2-Step Verification, then create an app password at Google Account → Security → App passwords.
+      Outlook/iCloud/Yahoo offer app passwords too. Saved in gitignored <code>credentials.toml</code>.
+      {{ stored }} message(s) stored. {% if stored %}{{ post_button(url_for('email_clear'), 'Clear stored email', 'danger small', confirm='Delete the stored copies? Your mailbox is not touched.') }}{% endif %}</p>
+  </section>
+</div>
+
+<h2>Category rules</h2>
+<p class="muted small">One keyword or phrase per line. Matching is case-insensitive on whole words, and subject matches count three times as much as body matches.
+  Mail that matches nothing is sorted under “Other”. You can still change a message's category by hand, and that choice sticks.</p>
+<form method="post" action="{{ url_for('email_rules') }}">
+  {{ csrf() }}
+  <div class="grid">
+  {% for key, label in P.TASK_CATEGORIES.items() if key != 'other' %}
+    <div><label for="rule_{{ key }}">{{ label }}</label>
+      <textarea id="rule_{{ key }}" name="rule_{{ key }}" rows="8">{{ (rules.get(key) or [])|join('\n') }}</textarea></div>
+  {% endfor %}
+  </div>
+  <div class="row mt"><button type="submit">Save rules &amp; re-sort</button>
+    <button type="submit" name="reset" value="1" class="secondary" data-confirm="Reset all rules to the defaults?">Reset to defaults</button></div>
+</form>
+
+{% if filters %}
+<h2>Search queries</h2>
+<p class="muted small">The same rules as searches for Gmail, Outlook or any mail app that supports <code>from:</code> and <code>OR</code>.</p>
+<div class="card scroll"><table>
+  <tr><th>Label</th><th>Search</th></tr>
+  {% for f in filters %}<tr><td>{{ f.label }}</td><td><code>{{ f.query }}</code></td></tr>{% endfor %}
+</table></div>
+{% endif %}
+{% endblock %}

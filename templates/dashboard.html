@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, here, ext, status_pill, post_button, task_line, visit_line with context %}
+{% block content %}
+{% set S = summary %}
+<div class="row spread">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">Portal checks, application work and campus visits — all stored on this computer.</p>
+  </div>
+  <form method="post" action="{{ url_for('run_checks') }}" class="row">
+    {{ csrf() }}
+    <button type="submit" {{ 'disabled' if job.running }}>Run all checks now</button>
+    <span class="muted small">{{ 'Headless' if headless else 'Visible browser' }}</span>
+  </form>
+</div>
+
+<div class="grid stats">
+  <div class="card"><div class="muted small">Overdue tasks</div><div class="stat">{{ S.overdue_tasks|length }}</div></div>
+  <div class="card"><div class="muted small">Due in next {{ S.horizon_days }} days</div><div class="stat">{{ S.upcoming_tasks|length }}</div></div>
+  <div class="card"><div class="muted small">Upcoming visits</div><div class="stat">{{ S.upcoming_visits|length }}</div></div>
+  <div class="card"><div class="muted small">Checks needing attention</div>
+    <div class="stat">{{ results|rejectattr('status', 'equalto', 'ok')|list|length }}</div></div>
+  <div class="card"><div class="muted small"><a href="{{ url_for('email_page', show='important') }}">Important college email</a></div>
+    <div class="stat">{{ mail.important|length }}</div></div>
+</div>
+
+{% if alerts %}
+<h2 class="row spread"><span>Alerts</span>{{ post_button(url_for('dismiss_alert', alert_id='all'), 'Dismiss all') }}</h2>
+<div class="stack">
+{% for a in alerts %}
+  <div class="card alert {{ a.kind }}">
+    <div class="row spread">
+      <div>
+        <b>{{ a.title }}</b>
+        <div class="muted small">{{ a.body }} · {{ a.created_at|when }}{% if a.link %} · <a href="{{ a.link }}">open</a>{% endif %}</div>
+      </div>
+      {{ post_button(url_for('dismiss_alert', alert_id=a.id), 'Dismiss') }}
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% endif %}
+
+<div class="grid">
+  <section class="card">
+    <div class="row spread"><h3>Tasks &amp; deadlines</h3><a class="btn small" href="{{ url_for('new_task') }}">Add task</a></div>
+    {% if S.overdue_tasks %}
+      <p class="muted small"><b>Overdue</b></p>
+      <ul class="list">{% for t in S.overdue_tasks %}<li>{{ task_line(t, S.colleges) }}</li>{% endfor %}</ul>
+    {% endif %}
+    <p class="muted small"><b>Next {{ S.horizon_days }} days</b></p>
+    {% if S.upcoming_tasks %}
+      <ul class="list">{% for t in S.upcoming_tasks %}<li>{{ task_line(t, S.colleges) }}</li>{% endfor %}</ul>
+    {% else %}<p class="empty">Nothing due in the next {{ S.horizon_days }} days.</p>{% endif %}
+    {% if S.undated_tasks %}<p class="muted small">{{ S.undated_tasks|length }} open task(s) without a due date — <a href="{{ url_for('tasks') }}">see all</a>.</p>{% endif %}
+  </section>
+
+  <section class="card">
+    <div class="row spread"><h3>Upcoming visits &amp; events</h3><a class="btn small" href="{{ url_for('new_visit') }}">Plan a visit</a></div>
+    {% if S.upcoming_visits %}
+      <ul class="list">
+      {% for v in S.upcoming_visits[:8] %}
+        <li>{{ visit_line(v, S.colleges) }}
+          {% set open_prep = v.prep|rejectattr('done')|list %}
+          {% if v.status == 'planned' %}<div class="small"><span class="pill warn">Not registered yet</span> Register on the {{ ext(v.source_url, 'official page') }}, then mark it registered.</div>{% endif %}
+          {% if open_prep %}<div class="small muted">Prep left: {{ open_prep|map(attribute='text')|join(', ') }}</div>{% endif %}
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}<p class="empty">No visits planned. Add campus tours, virtual sessions or college fairs.</p>{% endif %}
+    {% if S.needs_wrapup %}
+      <p class="muted small"><b>Past — mark completed or cancelled</b></p>
+      <ul class="list">{% for v in S.needs_wrapup %}<li>{{ visit_line(v, S.colleges) }}
+        <div class="row">{{ post_button(url_for('visit_status', visit_id=v.id), 'Completed', 'small', fields={'status':'completed'}) }}
+        {{ post_button(url_for('visit_status', visit_id=v.id), 'Cancelled', 'secondary small', fields={'status':'cancelled'}) }}</div></li>{% endfor %}</ul>
+    {% endif %}
+    {% if S.open_followups %}
+      <p class="muted small"><b>Visit follow-ups</b></p>
+      <ul class="list">{% for f in S.open_followups %}<li>{{ f.text }} <span class="muted small">— <a href="{{ url_for('visit', visit_id=f.visit.id) }}">{{ f.visit.title }}</a></span></li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+</div>
+
+{% if reminders %}
+<div class="card mt">
+  <div class="row spread">
+    <div><b>{{ reminders|length }} reminder(s) due</b> <span class="muted small">(you turned these on per task/visit)</span></div>
+    {{ post_button(url_for('send_reminders'), 'Record reminders' + (' & notify' if notify.enabled else ''), 'small') }}
+  </div>
+  <ul class="list">{% for r in reminders %}<li>{{ r.title }} <span class="muted small">{{ r.body }}</span></li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<h2>Portal checks</h2>
+{% if not sites %}
+  <p class="notice">No sites configured yet. <a href="{{ url_for('sites') }}">Add a site</a> you are authorised to use, then add the pages to check.</p>
+{% elif not results %}
+  <p class="notice">No results yet. Click “Run all checks now”.</p>
+{% endif %}
+{% for site in sites %}
+  {% set rs = results|selectattr('site_id', 'equalto', site.id)|list %}
+  <div class="card">
+    <div class="row spread">
+      <h3><a href="{{ url_for('edit_site', site_id=site.id) }}">{{ site.name }}</a></h3>
+      <form method="post" action="{{ url_for('run_checks') }}">{{ csrf() }}<input type="hidden" name="site_id" value="{{ site.id }}">
+        <button type="submit" class="secondary small" {{ 'disabled' if job.running }}>Check this site</button></form>
+    </div>
+    {% if not site.checks %}<p class="empty">No checks configured.</p>{% endif %}
+    {% for c in site.checks %}
+      {% set r = rs|selectattr('check_id', 'equalto', c.id)|first %}
+      <div class="stack mt">
+        <div class="row spread">
+          <div>
+            <b>{{ c.name }}</b> {% if r %}{{ status_pill(r.status) }}{% else %}<span class="pill">Not run</span>{% endif %}
+            {% if r and r.change and r.change.changed %}<span class="pill info">Changed</span>{% endif %}
+            {% if r and r.change and r.change.watch_hits %}<span class="pill warn">Watching: {{ r.change.watch_hits|join(', ') }}</span>{% endif %}
+            <div class="muted small">{{ r.title or c.url if r else c.url }} · checked {{ r.checked_at|when if r else 'never' }}</div>
+          </div>
+          <div class="row small">
+            <a href="{{ url_for('check_history', site_id=site.id, check_id=c.id) }}">History</a>
+            <a href="{{ url_for('new_task', title=c.name ~ ' (' ~ site.name ~ ')', source_url=c.url, check_ref=site.id ~ '/' ~ c.id, college=site.college_id or '') }}">Make task</a>
+          </div>
+        </div>
+        {% if r and r.error %}<div class="flash error small">{{ r.error }}{% if r.status == 'reauth_required' %} <a href="{{ url_for('sites') }}#site-{{ site.id }}">Sign in</a>{% endif %}</div>{% endif %}
+        {% if r and r.change and r.change.diff %}
+          <details><summary>What changed</summary>
+            <div class="diff">{% for d in r.change.diff %}<div class="{{ 'add' if d.op == '+' else 'del' if d.op == '-' else 'gap' if d.op == '…' else '' }}">{{ d.op }} {{ d.text }}</div>{% endfor %}</div>
+          </details>
+        {% endif %}
+        {% if r and r.excerpt %}<details><summary>Page text</summary><pre>{{ r.excerpt }}</pre></details>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endfor %}
+{% endblock %}
