@@ -1,0 +1,17 @@
+[
+  {
+    "id": "state-u",
+    "name": "State University portal",
+    "auth": "manual",
+    "login_url": "https://portal.state.example.edu/login",
+    "checks": [
+      {
+        "id": "checklist",
+        "name": "Registration checklist",
+        "url": "https://portal.state.example.edu/student/checklist",
+        "selectors": ["main"],
+        "watch": ["hold", "missing"]
+      }
+    ]
+  }
+]

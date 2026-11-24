@@ -1,13 +1,44 @@
-.venv/
+# ---- Secrets & personal data (never commit) ----------------------------
 .env
-__pycache__/
-*.pyc
-*.pyo
-data/
-*.log
-.DS_Store
-venv/
-.env.local
-todo.md
+.env.*
+!.env.example
 credentials.toml
+credentials*.toml
+*.credentials.toml
+# Your own sites (portal URLs). Start from sites.example.json.
+sites.json
+# Runtime data: results, history, alerts, planner, sessions (data/auth),
+# stored college email, automation settings, Flask secret key.
+data/
+# Chrome password exports and other CSVs hold passwords in plain text.
+*.csv
+# Files downloaded from the app if saved inside the repo.
+college-tracker*.ics
+college-tracker-gmail-filters*.xml
+# Local notes
+todo.md
+
+# ---- Python / tooling ---------------------------------------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
 .pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+*.log
+
+# ---- Editors / OS -------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
