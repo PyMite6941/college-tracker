@@ -41,6 +41,7 @@ for you, against accounts you own or are authorised to use.
 | `data/auth/<site>.json` | Playwright session state (cookies, local storage) from a sign-in | Treat as a password. **Forget session** deletes it, and so does deleting the site. |
 | `data/.secret_key` | Random Flask session key | Generated on first run. |
 | `.env` | Settings and optional fallback credentials | Never commit it. |
+| `sites.json` | Your portal URLs and checks (no passwords) | Personal, so it is gitignored. `sites.example.json` is the committed template. |
 
 Everything else in `data/` (results, history, alerts, planner, `emails.json`) is personal
 data. It is local-only and also gitignored.

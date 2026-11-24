@@ -1,5 +1,8 @@
 # College Tracker
 
+[![tests](https://github.com/PyMite6941/college-tracker/actions/workflows/tests.yml/badge.svg)](https://github.com/PyMite6941/college-tracker/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 A local-first college planning hub. It runs on your own computer at
 `http://127.0.0.1:5000` and brings together:
 
@@ -156,12 +159,16 @@ run is compared with the last *OK* run.
 
 | File | Committed? | Purpose |
 |---|---|---|
-| `sites.json` | yes | Sites and their checks. No secrets. Editable from the UI. |
+| `sites.example.json` | yes | Example site definition to copy from |
+| `sites.json` | **no** | Your sites and checks (portal URLs, no passwords). Created when you add a site in the UI. |
 | `.env` | **no** | Settings (see `.env.example`) |
 | `credentials.toml` | **no** | Saved usernames, and passwords unless `CREDENTIAL_STORE=keyring` |
 | `data/` | **no** | Results, history, alerts, planner records, saved sessions, stored college email, automation settings |
 
 ### `sites.json` format
+
+The app creates `sites.json` when you add a site. You can also start from
+`sites.example.json` (`cp sites.example.json sites.json`).
 
 ```json
 [
@@ -259,3 +266,13 @@ attempted.
 - [NACAC: college fairs](https://www.nacacnet.org/college-fairs/)
 - For a specific event, always save the college's own admissions or
   campus-visit page as its source.
+
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the
+ground rules (local-only, read-only, never bypass MFA or CAPTCHAs), the
+dev setup and the contributor list.
+
+## License
+
+[MIT](LICENSE) © 2026 PyMite6941 and College Tracker contributors.
