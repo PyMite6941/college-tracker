@@ -53,3 +53,42 @@ def csrf(client):
 @pytest.fixture
 def token(client):
     return csrf(client)
+
+
+try:
+    from keyring.backend import KeyringBackend as _Base
+except ImportError:  # keyring is optional
+    _Base = object
+
+
+class MemoryKeyring(_Base):
+    """In-memory keyring so tests never touch the real OS credential vault."""
+    priority = 1
+
+    def __init__(self):
+        self.store = {}
+
+    def get_password(self, service, name):
+        return self.store.get((service, name))
+
+    def set_password(self, service, name, password):
+        self.store[(service, name)] = password
+
+    def delete_password(self, service, name):
+        self.store.pop((service, name), None)
+
+
+@pytest.fixture(autouse=True)
+def memory_keyring(monkeypatch):
+    kr = MemoryKeyring()
+    monkeypatch.delenv("CREDENTIAL_STORE", raising=False)
+    try:
+        import keyring
+        import keyring.core
+    except ImportError:
+        yield kr
+        return
+    previous = keyring.get_keyring()
+    keyring.core.set_keyring(kr)
+    yield kr
+    keyring.core.set_keyring(previous)

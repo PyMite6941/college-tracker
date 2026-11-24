@@ -37,7 +37,7 @@ for you, against accounts you own or are authorised to use.
 
 | File | Contents | Notes |
 |---|---|---|
-| `credentials.toml` | Usernames and passwords saved from the Sites page, plus the `[imap]` email app password | Plain text, mode `600` on macOS/Linux. Prefer **manual** sign-in where possible. |
+| `credentials.toml` | Usernames and passwords saved from the Sites page, plus the `[imap]` email app password | Plain text, mode `600` on macOS/Linux, unless `CREDENTIAL_STORE=keyring`. In that case passwords go to Windows Credential Manager / macOS Keychain / Secret Service (service `college-tracker`) and only a marker stays in the file. Run `python run.py secure` after switching. Prefer **manual** sign-in where possible. |
 | `data/auth/<site>.json` | Playwright session state (cookies, local storage) from a sign-in | Treat as a password. **Forget session** deletes it, and so does deleting the site. |
 | `data/.secret_key` | Random Flask session key | Generated on first run. |
 | `.env` | Settings and optional fallback credentials | Never commit it. |
