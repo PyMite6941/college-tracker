@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, ext, status_pill, post_button, task_line, visit_line with context %}
+{% block title %}{{ college.name }} — College Tracker{% endblock %}
+{% block content %}
+{% set cmap = {college.id: college} %}
+<p><a href="{{ url_for('colleges') }}">&larr; Colleges</a></p>
+<h1>{{ college.name }}</h1>
+<p class="muted">{{ college.location }}{% if college.location and (college.admissions_url or college.visit_url) %} · {% endif %}
+{{ ext(college.admissions_url, 'Official admissions page') }}{% if college.admissions_url and college.visit_url %} · {% endif %}{{ ext(college.visit_url, 'Official visit page') }}</p>
+{% if college.notes %}<div class="card"><pre>{{ college.notes }}</pre></div>{% endif %}
+
+<div class="grid mt">
+  <section class="card">
+    <div class="row spread"><h3>Visits &amp; events</h3><a class="btn small" href="{{ url_for('new_visit', college=college.id) }}">Plan a visit</a></div>
+    {% if visits %}<ul class="list">{% for v in visits %}<li>{{ visit_line(v, cmap) }}</li>{% endfor %}</ul>
+    {% else %}<p class="empty">No visits yet.</p>{% endif %}
+  </section>
+  <section class="card">
+    <div class="row spread"><h3>Tasks</h3><a class="btn small" href="{{ url_for('new_task', college=college.id) }}">Add task</a></div>
+    {% if tasks %}<ul class="list">{% for t in tasks %}<li>{{ task_line(t, cmap, False) }}</li>{% endfor %}</ul>
+    {% else %}<p class="empty">No tasks yet.</p>{% endif %}
+  </section>
+</div>
+
+{% if linked_sites %}
+<h2>Portal checks</h2>
+<div class="card"><ul class="list">
+{% for r in results %}<li>{{ status_pill(r.status) }} <a href="{{ url_for('check_history', site_id=r.site_id, check_id=r.check_id) }}">{{ r.site_name }} — {{ r.check_name }}</a> <span class="muted small">{{ r.checked_at|when }}</span></li>
+{% else %}<li class="empty">Linked portal: {{ linked_sites|map(attribute='name')|join(', ') }} — not checked yet.</li>{% endfor %}
+</ul></div>
+{% endif %}
+
+<h2>Edit college</h2>
+<form class="card" method="post" action="{{ url_for('edit_college', college_id=college.id) }}">
+  {{ csrf() }}
+  {% set c = college %}
+  {% include "_college_fields.html" %}
+  <div class="actions"><button type="submit">Save</button></div>
+</form>
+<p class="mt">{{ post_button(url_for('delete_college', college_id=college.id), 'Delete college', 'danger small', confirm='Delete ' ~ college.name ~ '?') }}</p>
+{% endblock %}

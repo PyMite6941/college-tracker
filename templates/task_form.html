@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, post_button with context %}
+{% block title %}{{ 'Edit task' if task else 'New task' }} — College Tracker{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('tasks') }}">&larr; Tasks</a></p>
+<h1>{{ 'Edit task' if task else 'New task' }}</h1>
+{% if not colleges %}<p class="notice">Add a college first on the <a href="{{ url_for('colleges') }}">Colleges</a> page.</p>{% endif %}
+<form class="card" method="post" action="{{ url_for('update_task', task_id=task.id) if task else url_for('create_task') }}">
+  {{ csrf() }}
+  <input type="hidden" name="next" value="{{ url_for('tasks') }}">
+  <div class="fields">
+    <div><label>Task</label><input name="title" value="{{ t.title or '' }}" required placeholder="Submit FAFSA"></div>
+    <div><label>College</label><select name="college_id" required><option value="">— choose —</option>
+      {% for c in colleges %}<option value="{{ c.id }}" {{ 'selected' if t.college_id == c.id }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div><label>Category</label><select name="category">{% for k, l in P.TASK_CATEGORIES.items() %}<option value="{{ k }}" {{ 'selected' if t.category == k }}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label>Due date <span class="hint">optional</span></label><input type="date" name="due_date" value="{{ t.due_date or '' }}"></div>
+    <div><label>Status</label><select name="status">{% for k, l in P.TASK_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if (t.status or 'todo') == k }}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label>Priority</label><select name="priority">{% for k, l in P.PRIORITIES.items() %}<option value="{{ k }}" {{ 'selected' if (t.priority or 'normal') == k }}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label>Official source / action URL <span class="hint">where you'll do it</span></label><input type="url" name="source_url" value="{{ t.source_url or '' }}" placeholder="https://studentaid.gov/"></div>
+    <div><label>Linked visit <span class="hint">optional</span></label><select name="visit_id"><option value="">—</option>
+      {% for v in visits %}<option value="{{ v.id }}" {{ 'selected' if t.visit_id == v.id }}>{{ v.date }} — {{ v.title }}</option>{% endfor %}</select></div>
+  </div>
+  {% if t.check_ref %}<p class="hint">From portal check <code>{{ t.check_ref }}</code></p>{% endif %}
+  <input type="hidden" name="check_ref" value="{{ t.check_ref or '' }}">
+  <label>Notes</label><textarea name="notes">{{ t.notes or '' }}</textarea>
+  <fieldset><legend>Reminder (opt-in)</legend>
+    <label class="check"><input type="checkbox" name="remind" {{ 'checked' if t.remind }}> Remind me before the due date</label>
+    <label>Days before</label><input type="number" min="0" max="60" name="remind_days" value="{{ t.remind_days if t.remind_days is not none else 3 }}">
+  </fieldset>
+  <div class="actions"><button type="submit">Save task</button></div>
+</form>
+{% if task %}<p class="mt">{{ post_button(url_for('delete_task', task_id=task.id), 'Delete task', 'danger small', confirm='Delete this task?') }}</p>{% endif %}
+{% endblock %}

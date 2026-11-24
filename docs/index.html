@@ -4,155 +4,108 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>College Tracker</title>
+<meta name="description" content="A local-first college planning hub: read-only portal checks with history and alerts, application tasks and deadlines, and campus visit planning.">
 <style>
-  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-         max-width: 800px; margin: 40px auto; padding: 0 20px; color: #111;
-         line-height: 1.6; background: #fafafa; }
-  header { background: #0a7; color: #fff; padding: 24px; border-radius: 8px; margin-bottom: 24px; }
-  h1 { margin: 0; font-size: 1.75rem; }
-  .tag { background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 12px;
-         font-size: 0.85rem; margin-top: 10px; display: inline-block; }
-  .card { background: #fff; border: 1px solid #ddd; border-radius: 8px;
-          padding: 20px; margin-bottom: 16px; }
-  h2 { margin-top: 0; font-size: 1.15rem; color: #0a7; }
-  code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px;
-         font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9em; }
-  pre { background: #f5f5f5; padding: 12px 16px; border-radius: 6px;
-        overflow: auto; }
-  .btn { background: #0a7; color: #fff; text-decoration: none; padding: 10px 16px;
-         border-radius: 6px; display: inline-block; margin-top: 12px; }
-  .btn:hover { background: #085; }
-  .muted { color: #666; font-size: 0.9rem; }
-  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-  .screenshot { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
-  .screenshot img { width: 100%; height: auto; display: block; }
-  .screenshot figcaption { padding: 8px 12px; font-size: 0.9rem; background: #f5f5f5; }
+  :root { --bg:#f6f7f9; --card:#fff; --text:#16181d; --muted:#646b78; --line:#dfe2e8; --accent:#0b7a5c; --soft:#e3f4ee; --code:#f0f2f5; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#111317; --card:#1a1d23; --text:#e8eaee; --muted:#9aa1ad; --line:#2c3039; --accent:#3cc497; --soft:#15372c; --code:#22262e; }
+  }
+  * { box-sizing: border-box; }
+  body { font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 48px 0 24px; }
+  h1 { font-size: 2.2rem; margin: 0 0 8px; }
+  h2 { font-size: 1.3rem; margin: 40px 0 12px; }
+  h3 { font-size: 1.02rem; margin: 0 0 6px; }
+  p.lead { font-size: 1.12rem; color: var(--muted); max-width: 680px; margin: 0; }
+  a { color: var(--accent); }
+  .btn { display: inline-block; background: var(--accent); color: #fff; padding: 9px 16px; border-radius: 8px; text-decoration: none; margin: 18px 8px 0 0; }
+  .btn.alt { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  figure img { display: block; width: 100%; height: auto; }
+  figcaption { padding: 10px 14px; font-size: 0.9rem; color: var(--muted); border-top: 1px solid var(--line); }
+  .hero-shot { margin-top: 28px; }
+  code, pre { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.88em; }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code); padding: 14px 16px; border-radius: 10px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .scroll { overflow-x: auto; }
+  footer { padding: 40px 0 60px; color: var(--muted); font-size: 0.9rem; }
 </style>
 </head>
 <body>
+<div class="wrap">
 <header>
   <h1>College Tracker</h1>
-  <p class="tag">Localhost dashboard &bull; Playwright &bull; Flask</p>
-  <p class="muted" style="margin-top:8px;">A local-first hub for authorized portal checks, application work, and campus visit planning.</p>
+  <p class="lead">A local-first college planning hub. It runs read-only checks of the portals you're authorised to use, keeps
+  your application deadlines and campus visits in one dashboard, and stores everything on your own computer.</p>
+  <a class="btn" href="https://github.com/PyMite6941/college-tracker">View on GitHub</a>
+  <a class="btn alt" href="https://github.com/PyMite6941/college-tracker/blob/master/SECURITY.md">Security model</a>
+  <figure class="hero-shot">
+    <img src="screenshots/dashboard.png" alt="Dashboard showing alerts, overdue and upcoming tasks, upcoming visits and portal check results" width="1200" height="1400" loading="eager">
+    <figcaption>The dashboard: alerts, deadlines, upcoming visits and portal checks (demo data).</figcaption>
+  </figure>
 </header>
 
-<div class="card">
-  <h2>About</h2>
-  <p>College Tracker currently logs into configured college portals using Playwright,
-  navigates to registration-checklist pages, and displays the extracted data. It is
-  evolving into a local-first college planning hub for authorized website checks,
-  application tasks, and campus visits. Credentials are stored in <code>.env</code>
-  (never committed). The list of websites to check lives in <code>sites.json</code>
-  and can be managed through the web UI.</p>
-  <p>Checks are intended to be read-only and limited to sites and accounts the user
-  is authorized to access. The app will not bypass MFA, passkeys, CAPTCHA, or other
-  site controls. Planned features are tracked in
-  <a href="https://github.com/PyMite6941/college-tracker/issues">GitHub Issues</a>.</p>
+<h2>Features</h2>
+<div class="grid">
+  <div class="card"><h3>Read-only portal checks</h3><p>Check several pages per site with Playwright. Each check keeps its page title, text, time checked and a clear error status.</p></div>
+  <div class="card"><h3>History &amp; diffs</h3><p>Timestamped history with line diffs. Sign-in and network failures are never mistaken for content changes. Retention is configurable.</p></div>
+  <div class="card"><h3>Watched text &amp; alerts</h3><p>Get an alert when words like “hold” or “missing” appear or disappear. Webhook notifications (ntfy, Discord, Slack) are opt-in.</p></div>
+  <div class="card"><h3>You sign in, not a bot</h3><p>Sign in yourself in a visible browser, including MFA, passkeys and CAPTCHAs. Sessions are saved per site, locally. When one expires, the app says so.</p></div>
+  <div class="card"><h3>Tasks &amp; deadlines</h3><p>Application, aid, transcript and essay tasks, each linked to a college and its official source page. Overdue and upcoming work is surfaced.</p></div>
+  <div class="card"><h3>College email by category</h3><p>Download Gmail filters that label mail by college and category, or turn on a read-only inbox sync that flags anything urgent and turns an email into a task.</p></div>
+  <div class="card"><h3>Runs on its own</h3><p>Optional timers for portal checks, email sync and reminders, or one <code>python run.py auto</code> line in Task Scheduler or cron.</p></div>
+  <div class="card"><h3>Campus visit planner</h3><p>Tours, open houses, info sessions, virtual events and college fairs, with RSVP status, logistics, prep, questions and follow-ups.</p></div>
 </div>
 
-<div class="card">
-  <h2>Quick start</h2>
-  <pre><code># Windows
-.\setup.bat
-.venv\Scripts\python run.py
-# open http://127.0.0.1:5000</code></pre>
+<h2>Screenshots</h2>
+<div class="grid">
+  <figure><img src="screenshots/email.png" alt="College email sorted by college and category with important messages flagged" loading="lazy"><figcaption>College email sorted by category, with urgent messages flagged.</figcaption></figure>
+  <figure><img src="screenshots/email-setup.png" alt="Gmail filter export, read-only inbox sync setup and editable category rules" loading="lazy"><figcaption>Gmail filter export and editable category rules.</figcaption></figure>
+  <figure><img src="screenshots/visit.png" alt="Visit detail with registration status, logistics, prep checklist and follow-ups" loading="lazy"><figcaption>A campus visit: official link, confirmation, prep and follow-ups.</figcaption></figure>
+  <figure><img src="screenshots/tasks.png" alt="Task list with categories, due dates and official source links" loading="lazy"><figcaption>Tasks with due dates and official source links.</figcaption></figure>
+  <figure><img src="screenshots/history.png" alt="Check history with a diff between runs" loading="lazy"><figcaption>Check history with diffs between successful runs.</figcaption></figure>
+  <figure><img src="screenshots/sites.png" alt="Sites page with sign-in modes, saved session status and Sign in buttons" loading="lazy"><figcaption>Sites: sign-in mode, saved session and credential status.</figcaption></figure>
+  <figure><img src="screenshots/site-edit.png" alt="Editing a site's checks, selectors and watched text" loading="lazy"><figcaption>Several read-only checks per site.</figcaption></figure>
+  <figure><img src="screenshots/visit-dark.png" alt="Visit detail in dark mode" loading="lazy"><figcaption>Dark mode follows your system setting.</figcaption></figure>
 </div>
 
-<div class="card">
-  <h2>Features</h2>
-  <ul>
-    <li>Flask dashboard on <code>http://127.0.0.1:5000</code></li>
-    <li>Playwright (Chromium) logs into each configured college portal</li>
-    <li>Extracts registration-checklist text and page titles</li>
-    <li>Add/remove tracked websites through the web UI (saved to <code>sites.json</code>)</li>
-    <li>Stored credentials in <code>.env</code> (gitignored)</li>
-  </ul>
-  <p><strong>Planned:</strong> human-assisted sign-in, configurable read-only
-  checks, check history, application tasks and deadlines, and campus visit planning.
-  Visit planning will use official college links supplied by the user; useful
-  starting points are the <a href="https://bigfuture.collegeboard.org/plan-for-college/college-search/visit-a-college">College Board visit guide</a>
-  and <a href="https://www.nacacnet.org/college-fairs/">NACAC college fairs</a>.</p>
+<h2>Quick start</h2>
+<div class="grid">
+  <div><h3>Windows</h3><pre>.\setup.bat
+.\run.bat
+# open http://127.0.0.1:5000</pre></div>
+  <div><h3>macOS / Linux</h3><pre>chmod +x setup.sh run.sh
+./setup.sh
+./run.sh
+# open http://127.0.0.1:5000</pre></div>
+</div>
+<p>Then add your colleges, add a portal under <b>Sites &amp; checks</b>, click <b>Sign in</b>, and run your first check.
+<code>python run.py check</code> and <code>python run.py remind</code> work from Task Scheduler or cron.</p>
+
+<h2>Sign-in modes</h2>
+<div class="card scroll"><table>
+  <tr><th>Mode</th><th>For</th><th>What happens</th></tr>
+  <tr><td><code>manual</code></td><td>SSO, MFA, passkeys, CAPTCHAs</td><td>You sign in in a visible browser. The session is saved locally and reused until the site expires it. Then the check reports <b>Sign-in needed</b>.</td></tr>
+  <tr><td><code>credentials</code></td><td>Simple login forms</td><td>Fills in a username and password saved locally. Stops for you if MFA or a CAPTCHA appears.</td></tr>
+  <tr><td><code>none</code></td><td>Public pages</td><td>No sign-in.</td></tr>
+</table></div>
+
+<h2>Privacy &amp; safety</h2>
+<div class="grid">
+  <div class="card"><h3>Local only</h3><p>Binds to 127.0.0.1, rejects foreign Host headers, and uses CSRF tokens and a strict CSP. Data, sessions and credentials stay on your machine and out of Git.</p></div>
+  <div class="card"><h3>Authorised use</h3><p>Only for accounts you own or may access. Checks are read-only, and the app never registers you for events or submits forms for you.</p></div>
+  <div class="card"><h3>No invented links</h3><p>Every college, visit and task link is one you paste from the official site. Internal-network URLs are blocked unless you opt in.</p></div>
 </div>
 
-<div class="card">
-  <h2>Password manager (Chrome)</h2>
-  <p>Two ways to bring credentials in from Google Chrome:</p>
-  <h3>1. Import from Chrome's exported passwords CSV</h3>
-  <ol>
-    <li>In Chrome, go to <code>chrome://settings/passwords</code> and click <strong>Export passwords</strong> to download a CSV.</li>
-    <li>Open the College Tracker <strong>Manage sites</strong> page (<code>/sites</code>).</li>
-    <li>Upload the CSV under <strong>Import passwords from Chrome</strong>.</li>
-    <li>New sites are added to <code>sites.json</code> automatically.</li>
-    <li>The import page shows <code>.env</code> lines to add — copy them into <code>.env</code> and fill in real values.</li>
-  </ol>
-  <h3>2. Reuse Chrome's saved passwords via browser profile</h3>
-  <p>Set <code>CHROME_USER_DATA_DIR</code> in <code>.env</code> to your Chrome User Data directory
-  (e.g. <code>C:\Users\&lt;you&gt;\AppData\Local\Google\Chrome\User Data</code> on Windows),
-  then add <code>chrome_profile: "Default"</code> to a site entry in <code>sites.json</code>:</p>
-  <pre><code>{
-  "id": "mycollege",
-  "name": "My College Portal",
-  "login_url": "https://college.edu/login",
-  "checklist_url": "https://college.edu/student/registration-checklist",
-  "chrome_profile": "Default",
-  "selectors": { ... },
-  "checklist_selectors": [ "main", "body" ]
-}</code></pre>
-  <p>When <code>CHROME_USER_DATA_DIR</code> is set, Playwright launches with your Chrome
-  profile so Chrome's saved passwords and autofill are available. This works best
-  in headed mode (<code>PLAYWRIGHT_HEADLESS=false</code>) so you can complete any
-  MFA/CAPTCHA steps yourself.</p>
-  <p class="muted"><strong>Security:</strong> <code>.env</code> is gitignored — never commit it.
-  This project does not read Chrome's encrypted Login Data database directly; it
-  either imports from your manually exported CSV or reuses Chrome's profile through
-  Playwright so Chrome handles decryption. Only import from sites and accounts you
-  own and are authorized to access.</p>
+<footer>Fictional demo data in the screenshots. Visit-planning guides: <a href="https://bigfuture.collegeboard.org/plan-for-college/college-search/visit-a-college">College Board</a> ·
+<a href="https://www.nacacnet.org/college-fairs/">NACAC college fairs</a>.</footer>
 </div>
-
-<div class="card">
-  <h2>Chrome profile selection (web UI)</h2>
-  <p>Open the <strong>Manage sites</strong> page (<code>/sites</code>) to
-  auto-detect and select a Chrome profile:</p>
-  <ol>
-    <li>Click <strong>Auto-detect Chrome profiles</strong> — the app reads
-    Chrome's Local State file and lists all installed profiles
-    (Default, Profile 1, etc.) with their display names and account emails.</li>
-    <li>Choose a profile from the dropdown.</li>
-    <li>Click <strong>Select profile</strong> — the choice is saved to
-    <code>.env</code> as <code>CHROME_USER_DATA_DIR</code> and
-    <code>CHROME_PROFILE</code>.</li>
-  </ol>
-  <p class="muted">Chrome must be closed for Playwright to use its profile.
-  If Chrome is running, close it first.</p>
-</div>
-
-<div class="card">
-   <h2>Screenshots</h2>
-  <p class="muted">Dashboard and sites-management screenshots go here. Update these whenever the UI changes.</p>
-  <div class="grid">
-    <div class="screenshot">
-      <img src="screenshots/dashboard.png" alt="Dashboard">
-      <figcaption>Dashboard — latest scrape results + add-site form</figcaption>
-    </div>
-    <div class="screenshot">
-      <img src="screenshots/sites.png" alt="Sites management">
-      <figcaption>Sites page — add and delete tracked websites</figcaption>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <h2>File layout</h2>
-  <pre><code>college-tracker/
-  app.py           # Flask website (localhost)
-  scraper.py       # Playwright login + checklist extraction
-  run.py           # Entrypoint
-  sites.json       # Websites to log into and check (committed)
-  .env.example     # Credential template (copy to .env, never commit)
-  docs/            # GitHub Pages site (this folder)
-  tests/           # mock HTML pages for end-to-end testing</code></pre>
-</div>
-
-<p class="muted" style="margin-top:24px;">&copy; College Tracker &mdash; localhost-only tool</p>
 </body>
 </html>

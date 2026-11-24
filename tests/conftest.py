@@ -1,0 +1,55 @@
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+# Point every runtime file at a throwaway directory *before* importing the app.
+_SESSION_TMP = tempfile.mkdtemp(prefix="ct-test-")
+os.environ["COLLEGE_TRACKER_DATA_DIR"] = os.path.join(_SESSION_TMP, "data")
+os.environ["COLLEGE_TRACKER_SITES_FILE"] = os.path.join(_SESSION_TMP, "sites.json")
+os.environ["COLLEGE_TRACKER_CREDENTIALS_FILE"] = os.path.join(_SESSION_TMP, "credentials.toml")
+for key in ("NOTIFY_WEBHOOK_URL", "CHROME_USER_DATA_DIR", "CHROME_PROFILE", "ALLOW_LOCAL_TARGETS",
+            "ALLOW_REMOTE", "HISTORY_MAX_RUNS", "HISTORY_MAX_DAYS"):
+    os.environ.pop(key, None)
+
+
+@pytest.fixture(autouse=True)
+def isolated(tmp_path, monkeypatch):
+    """Fresh data dir, sites.json and credentials per test."""
+    monkeypatch.setenv("COLLEGE_TRACKER_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("COLLEGE_TRACKER_SITES_FILE", str(tmp_path / "sites.json"))
+    monkeypatch.setenv("COLLEGE_TRACKER_CREDENTIALS_FILE", str(tmp_path / "credentials.toml"))
+    for key in ("NOTIFY_WEBHOOK_URL", "CHROME_USER_DATA_DIR", "CHROME_PROFILE", "ALLOW_LOCAL_TARGETS"):
+        monkeypatch.delenv(key, raising=False)
+    (tmp_path / "sites.json").write_text("[]", encoding="utf-8")
+    yield tmp_path
+
+
+@pytest.fixture
+def app():
+    import app as app_module
+    a = app_module.create_app(testing=True)
+    return a
+
+
+@pytest.fixture
+def client(app):
+    c = app.test_client()
+    return c
+
+
+def csrf(client):
+    """Load a page so the session has a CSRF token, and return it."""
+    client.get("/")
+    with client.session_transaction() as s:
+        return s["csrf_token"]
+
+
+@pytest.fixture
+def token(client):
+    return csrf(client)

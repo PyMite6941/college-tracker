@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, here, ext, post_button with context %}
+{% block title %}{{ v.title }} — College Tracker{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('visits') }}">&larr; Visits</a>{% if college %} · <a href="{{ url_for('college', college_id=college.id) }}">{{ college.name }}</a>{% endif %}</p>
+<div class="row spread">
+  <div>
+    <h1>{{ v.title }} <span class="pill {{ v.status }}">{{ P.RSVP_STATES[v.status] }}</span></h1>
+    <p class="muted">{{ college.name if college }} · {{ P.VISIT_KINDS.get(v.kind) }} · {{ P.VISIT_FORMATS.get(v.format) }} ·
+      {{ v.date|day }}{% if v.start_time %}, {{ v.start_time }}{% if v.end_time %}–{{ v.end_time }}{% endif %}{% endif %} {{ v.timezone }} ({{ v.date|days_from_today }})</p>
+  </div>
+  <a class="btn secondary" href="{{ url_for('edit_visit', visit_id=v.id) }}">Edit</a>
+</div>
+
+<div class="card">
+  <div class="row">
+    <b>Status:</b>
+    {% for s in ['planned', 'registered', 'confirmed', 'completed', 'cancelled'] if s != v.status %}
+      {{ post_button(url_for('visit_status', visit_id=v.id), 'Mark ' ~ s, 'danger small' if s == 'cancelled' else 'secondary small', confirm=('Cancel this visit?' if s == 'cancelled' else None), fields={'status': s}) }}
+    {% endfor %}
+  </div>
+  {% if v.status == 'planned' and not is_past %}<p class="small mt"><span class="pill warn">Not registered</span> Register yourself on the official page below, then mark it registered and paste any confirmation.</p>{% endif %}
+  {% if is_past and v.status not in ['completed', 'cancelled'] %}<p class="small mt"><span class="pill warn">This date has passed</span> Mark it completed (and add notes) or cancelled.</p>{% endif %}
+</div>
+
+<div class="grid mt">
+  <section class="card">
+    <h3>Details</h3>
+    <dl class="kv">
+      <dt>Official page</dt><dd>{{ ext(v.source_url) }}</dd>
+      {% if v.confirmation %}<dt>Confirmation</dt><dd>{{ v.confirmation }}</dd>{% endif %}
+      {% if v.location %}<dt>Location</dt><dd>{{ v.location }}</dd>{% endif %}
+      {% if v.directions_url %}<dt>Map / directions</dt><dd>{{ ext(v.directions_url, 'Open map') }}</dd>{% endif %}
+      {% if v.meeting_url %}<dt>Meeting link</dt><dd>{{ ext(v.meeting_url, 'Join') }}</dd>{% endif %}
+      {% if v.estimated_cost is not none %}<dt>Estimated cost</dt><dd>${{ '%.2f'|format(v.estimated_cost) }}</dd>{% endif %}
+      {% if v.accessibility %}<dt>Accessibility</dt><dd>{{ v.accessibility }}</dd>{% endif %}
+      <dt>Reminder</dt><dd>{{ ('on, ' ~ v.remind_days ~ ' day(s) before') if v.remind else 'off' }}</dd>
+    </dl>
+    {% if v.logistics %}<h3 class="mt">Travel &amp; logistics</h3><pre>{{ v.logistics }}</pre>{% endif %}
+  </section>
+  <section class="card">
+    <h3>Preparation</h3>
+    {% if v.prep %}<ul class="checklist">{% for item in v.prep %}
+      <li class="{{ 'done' if item.done }}">{{ post_button(url_for('visit_toggle', visit_id=v.id), '✓' if item.done else '○', 'secondary small', fields={'field':'prep','index':loop.index0}) }}<span>{{ item.text }}</span></li>
+    {% endfor %}</ul>{% else %}<p class="empty">No prep items. Add some via Edit.</p>{% endif %}
+    {% if v.questions %}<h3 class="mt">Questions to ask</h3><ul>{% for q in v.questions %}<li>{{ q }}</li>{% endfor %}</ul>{% endif %}
+  </section>
+  <section class="card">
+    <h3>After the visit</h3>
+    {% if v.notes %}<pre>{{ v.notes }}</pre>{% else %}<p class="empty">No notes yet.</p>{% endif %}
+    {% if v.contacts %}<h3 class="mt">Contacts</h3><pre>{{ v.contacts }}</pre>{% endif %}
+    <h3 class="mt">Follow-ups</h3>
+    {% if v.followups %}<ul class="checklist">{% for item in v.followups %}
+      <li class="{{ 'done' if item.done }}">{{ post_button(url_for('visit_toggle', visit_id=v.id), '✓' if item.done else '○', 'secondary small', fields={'field':'followups','index':loop.index0}) }}<span>{{ item.text }}</span>
+        {% if not item.done %}{{ post_button(url_for('followup_task', visit_id=v.id), 'Make task', 'link small', fields={'index':loop.index0}) }}{% endif %}</li>
+    {% endfor %}</ul>{% else %}<p class="empty">No follow-ups.</p>{% endif %}
+    {% if tasks %}<h3 class="mt">Linked tasks</h3><ul>{% for t in tasks %}<li><a href="{{ url_for('edit_task', task_id=t.id) }}">{{ t.title }}</a> <span class="pill {{ t.status }}">{{ P.TASK_STATUSES[t.status] }}</span></li>{% endfor %}</ul>{% endif %}
+  </section>
+</div>
+<p class="mt">{{ post_button(url_for('delete_visit', visit_id=v.id), 'Delete visit', 'danger small', confirm='Delete this visit permanently?') }}</p>
+{% endblock %}

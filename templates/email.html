@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, here, ext, post_button with context %}
+{% block title %}Email — College Tracker{% endblock %}
+{% block content %}
+<div class="row spread">
+  <div><h1>College email</h1>
+  <p class="muted">Mail from your colleges' email domains, sorted by college and category. Read-only: your mailbox is never changed.</p></div>
+  <div class="row">
+    {% if cfg.configured %}
+    <form method="post" action="{{ url_for('email_sync') }}" class="inline">{{ csrf() }}{{ here() }}
+      <button type="submit" {{ 'disabled' if job.running }}>Sync now</button></form>
+    {% endif %}
+    <a class="btn secondary" href="{{ url_for('email_setup') }}">Filters &amp; setup</a>
+  </div>
+</div>
+
+{% if not cfg.configured %}
+<div class="card mt"><p><b>Inbox sync isn't set up.</b> You can still <a href="{{ url_for('email_setup') }}">download Gmail filters</a>
+  that label college mail by college and category inside Gmail, with no password needed here.</p></div>
+{% endif %}
+{% if missing_domains %}
+<p class="small muted mt">No email domains yet for:
+  {% for c in missing_domains %}<a href="{{ url_for('edit_college', college_id=c.id) }}">{{ c.name }}</a>{{ ', ' if not loop.last }}{% endfor %}.
+  Mail from these colleges can't be sorted until you add one.</p>
+{% endif %}
+
+<div class="row small mt">
+  <a class="pill {{ 'info' if not category }}" href="{{ url_for('email_page', college=college_id, show=show) }}">All {{ counts.open }}</a>
+  {% for key, label in P.TASK_CATEGORIES.items() %}{% if counts.by_category[key] %}
+  <a class="pill {{ 'info' if category == key }}" href="{{ url_for('email_page', college=college_id, show=show, category=key) }}">{{ label }} {{ counts.by_category[key] }}</a>
+  {% endif %}{% endfor %}
+</div>
+
+<form method="get" class="row small mt">
+  <label class="check">College
+    <select name="college"><option value="">All</option>{% for c in colleges %}<option value="{{ c.id }}" {{ 'selected' if college_id == c.id }}>{{ c.name }}</option>{% endfor %}</select></label>
+  <label class="check">Category
+    <select name="category"><option value="">All</option>{% for k, l in P.TASK_CATEGORIES.items() %}<option value="{{ k }}" {{ 'selected' if category == k }}>{{ l }}</option>{% endfor %}</select></label>
+  <label class="check">Show
+    <select name="show">{% for k, l in shows.items() %}<option value="{{ k }}" {{ 'selected' if show == k }}>{{ l }}</option>{% endfor %}</select></label>
+  <button type="submit" class="secondary small">Filter</button>
+</form>
+
+<div class="card mt">
+{% if emails %}
+<ul class="list">
+{% for m in emails %}
+  <li>
+    <div class="row spread">
+      <div>
+        <b>{{ m.subject or '(no subject)' }}</b>
+        {% for w in m.important[:3] %}<span class="pill warn">{{ w }}</span> {% endfor %}
+        {% if m.done %}<span class="pill done">Done</span>{% endif %}
+        <div class="muted small">
+          {{ college_map[m.college_id].name if m.college_id in college_map else m.college_id }}
+          · {{ m.from_name or m.from_domain }} &lt;{{ m.from_domain }}&gt; · {{ m.date|when }}
+          {% if web_link(m) %} · {{ ext(web_link(m), 'open in Gmail') }}{% endif %}
+        </div>
+        {% if m.snippet %}<div class="small mt-s email-snippet">{{ m.snippet[:220] }}{{ '…' if m.snippet|length > 220 }}</div>{% endif %}
+      </div>
+      <div class="row">
+        <form class="inline row" method="post" action="{{ url_for('email_update', msg_id=m.id) }}">{{ csrf() }}{{ here() }}
+          <select name="category" class="small" aria-label="Category" data-autosubmit>
+            {% for k, l in P.TASK_CATEGORIES.items() %}<option value="{{ k }}" {{ 'selected' if m.category == k }}>{{ l }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="secondary small">Set</button>
+        </form>
+        <a class="btn small secondary" href="{{ url_for('new_task', college=m.college_id, category=m.category, title=m.subject[:200], source_url=web_link(m)) }}">Make task</a>
+        {{ post_button(url_for('email_update', msg_id=m.id), 'Undo' if m.done else 'Done', 'small', fields={'done': '0' if m.done else '1'}) }}
+      </div>
+    </div>
+  </li>
+{% endfor %}
+</ul>
+{% else %}<p class="empty">No college email here{% if cfg.configured %} yet. Try <b>Sync now</b>{% endif %}.</p>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}College Tracker{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="{{ url_for('index') }}">College Tracker</a>
+    <nav class="main" aria-label="Main">
+      <a href="{{ url_for('index') }}" class="{{ 'on' if nav == 'index' }}">Dashboard{% if open_alert_count %}<span class="badge-count">{{ open_alert_count }}</span>{% endif %}</a>
+      <a href="{{ url_for('tasks') }}" class="{{ 'on' if 'task' in nav }}">Tasks</a>
+      <a href="{{ url_for('visits') }}" class="{{ 'on' if 'visit' in nav }}">Visits</a>
+      <a href="{{ url_for('colleges') }}" class="{{ 'on' if 'college' in nav }}">Colleges</a>
+      <a href="{{ url_for('email_page') }}" class="{{ 'on' if 'email' in nav }}">Email</a>
+      <a href="{{ url_for('sites') }}" class="{{ 'on' if 'site' in nav or 'check' in nav }}">Sites &amp; checks</a>
+      <a href="{{ url_for('settings') }}" class="{{ 'on' if 'setting' in nav }}">Settings</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  {% if job.running or job.finished_at %}
+  <div id="job-banner" class="job {{ 'failed' if job.error else ('done' if not job.running else '') }}"
+       data-running="{{ 'true' if job.running else 'false' }}" role="status">
+    {% if job.running %}
+      <div class="row spread">
+        <span><b>{{ job.label }}</b> — <span id="job-message">{{ job.message }}</span></span>
+        {% if job.kind == 'sign_in' %}
+        <form class="inline" method="post" action="{{ url_for('finish_sign_in') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button type="submit">I've signed in — save session</button>
+        </form>
+        {% endif %}
+      </div>
+    {% elif job.error %}
+      <b>{{ job.label }}</b> failed: {{ job.error }}
+    {% else %}
+      <b>{{ job.label }}</b> finished {{ job.finished_at|when }}.
+      {% if job.result and job.result.by_status %}
+        {% for s, n in job.result.by_status.items() %}<span class="pill {{ s }}">{{ n }} {{ STATUS_LABELS.get(s, s) }}</span> {% endfor %}
+      {% elif job.result and job.kind == 'email' %}
+        {{ job.result.added }} new college email(s), {{ job.result.matched }} matched.
+      {% elif job.result and job.kind == 'sign_in' %}
+        {{ 'Session saved.' if job.result.saved else 'No session was saved.' }}
+      {% endif %}
+    {% endif %}
+  </div>
+  {% endif %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}<div class="flash {{ cat if cat != 'message' else 'info' }}" role="alert">{{ msg }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

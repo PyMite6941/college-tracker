@@ -1,0 +1,50 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% endmacro %}
+{% macro here() %}<input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">{% endmacro %}
+{% macro ext(url, text=None) %}{% if url %}<a class="ext" href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ text or url }}</a>{% endif %}{% endmacro %}
+{% macro status_pill(s) %}<span class="pill {{ s }}">{{ STATUS_LABELS.get(s, s) }}</span>{% endmacro %}
+{% macro post_button(action, label, cls='secondary small', confirm=None, fields={}) %}
+<form class="inline" method="post" action="{{ action }}"{% if confirm %} data-confirm="{{ confirm }}"{% endif %}>
+  {{ csrf() }}{{ here() }}
+  {% for k, v in fields.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  <button type="submit" class="{{ cls }}">{{ label }}</button>
+</form>
+{% endmacro %}
+{% macro task_line(t, colleges, show_college=True) %}
+{% set overdue = t.due_date and t.status != 'done' and t.due_date < today.isoformat() %}
+<div class="row spread">
+  <div>
+    <a href="{{ url_for('edit_task', task_id=t.id) }}"><b>{{ t.title }}</b></a>
+    {% if t.priority == 'high' %}<span class="pill high">High</span>{% endif %}
+    <span class="pill {{ t.status }}">{{ P.TASK_STATUSES[t.status] }}</span>
+    <div class="muted small">
+      {% if show_college %}{{ colleges[t.college_id].name if t.college_id in colleges else t.college_id }} · {% endif %}
+      {{ P.TASK_CATEGORIES.get(t.category, t.category) }}
+      {% if t.due_date %} · <span class="{{ 'pill overdue' if overdue }}">due {{ t.due_date|day }} ({{ t.due_date|days_from_today }})</span>{% endif %}
+      {% if t.remind %} · reminder on{% endif %}
+      {% if t.source_url %} · {{ ext(t.source_url, 'official source') }}{% else %} · <span class="hint">no source link</span>{% endif %}
+    </div>
+  </div>
+  <div class="row">
+    {% if t.status != 'done' %}
+      {{ post_button(url_for('task_status', task_id=t.id), 'Done', 'small', fields={'status': 'done'}) }}
+    {% else %}
+      {{ post_button(url_for('task_status', task_id=t.id), 'Reopen', 'secondary small', fields={'status': 'todo'}) }}
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+{% macro visit_line(v, colleges) %}
+<div class="row spread">
+  <div>
+    <a href="{{ url_for('visit', visit_id=v.id) }}"><b>{{ v.title }}</b></a>
+    <span class="pill {{ v.status }}">{{ P.RSVP_STATES[v.status] }}</span>
+    <div class="muted small">
+      {{ colleges[v.college_id].name if v.college_id in colleges else v.college_id }} ·
+      {{ P.VISIT_KINDS.get(v.kind, v.kind) }} ·{% if P.VISIT_FORMATS.get(v.format) != P.VISIT_KINDS.get(v.kind) %} {{ P.VISIT_FORMATS.get(v.format, v.format) }} ·{% endif %}
+      {{ v.date|day }}{% if v.start_time %} {{ v.start_time }}{% if v.end_time %}–{{ v.end_time }}{% endif %} {{ v.timezone }}{% endif %}
+      ({{ v.date|days_from_today }})
+    </div>
+  </div>
+  <div>{{ ext(v.source_url, 'official page') }}</div>
+</div>
+{% endmacro %}

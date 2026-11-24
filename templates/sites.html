@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, here, ext, post_button with context %}
+{% block title %}Sites — College Tracker{% endblock %}
+{% block content %}
+<h1>Sites &amp; checks</h1>
+<p class="muted">Portals you are authorised to use. Each site has one or more read-only checks (pages to read).
+Site definitions are saved to <code>sites.json</code>; passwords and sessions stay in gitignored local files.</p>
+
+{% for s in sites %}
+<div class="card" id="site-{{ s.id }}">
+  <div class="row spread">
+    <div>
+      <h3><a href="{{ url_for('edit_site', site_id=s.id) }}">{{ s.name }}</a> <code>{{ s.id }}</code></h3>
+      <div class="muted small">
+        {{ auth_modes.get(s.auth, s.auth) }} · {{ s.checks|length }} check(s)
+        {% if s.auth == 'credentials' %} · {% if s.creds_saved %}<span class="pill ok">credentials saved</span>{% else %}<span class="pill warn">no credentials</span>{% endif %}{% endif %}
+        {% if s.auth != 'none' %} ·
+          {% if s.session.saved %}<span class="pill {{ 'warn' if s.session.expired else 'ok' }}">session saved {{ s.session.saved_at|when }}{{ ' (old — sign in again)' if s.session.expired }}</span>
+          {% else %}<span class="pill">no saved session</span>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="row">
+      {% if s.auth != 'none' %}
+        {{ post_button(url_for('sign_in', site_id=s.id), 'Sign in', 'small') }}
+        {% if s.session.saved %}{{ post_button(url_for('forget_session', site_id=s.id), 'Forget session', 'secondary small', confirm='Delete the saved session for ' ~ s.name ~ '?') }}{% endif %}
+      {% endif %}
+      <a class="btn secondary small" href="{{ url_for('edit_site', site_id=s.id) }}">Edit</a>
+      {{ post_button(url_for('delete_site', site_id=s.id), 'Delete', 'danger small', confirm='Delete ' ~ s.name ~ ' and its saved session and credentials?') }}
+    </div>
+  </div>
+  {% if s.errors %}<div class="flash error small mt">Configuration problems: {{ s.errors|join(' ') }}</div>{% endif %}
+  {% if s.auth == 'credentials' %}
+  <details class="mt"><summary>{{ 'Replace' if s.creds_in_toml else 'Save' }} username/password</summary>
+    <form method="post" action="{{ url_for('save_site_credentials', site_id=s.id) }}" class="fields" autocomplete="off">
+      {{ csrf() }}{{ here() }}
+      <div><label>Username</label><input type="text" name="username" required autocomplete="off"></div>
+      <div><label>Password</label><input type="password" name="password" required autocomplete="new-password"></div>
+      <div class="actions"><button type="submit">Save locally</button></div>
+    </form>
+    {% if s.creds_in_toml %}{{ post_button(url_for('delete_site_credentials', site_id=s.id), 'Remove saved credentials', 'danger small', confirm='Remove saved credentials?') }}{% endif %}
+    <p class="hint">Saved in plain text to <code>credentials.toml</code> on this computer (gitignored). Prefer “manual” sign-in if the site supports SSO or MFA.</p>
+  </details>
+  {% endif %}
+</div>
+{% else %}
+<p class="notice">No sites yet. Add one below.</p>
+{% endfor %}
+
+<h2>Add a site</h2>
+<form class="card" method="post" action="{{ url_for('add_site') }}">
+  {{ csrf() }}
+  <div class="fields">
+    <div><label>Display name</label><input name="name" required placeholder="State University portal"></div>
+    <div><label>Site id <span class="hint">optional, lowercase</span></label><input name="id" placeholder="state-u"></div>
+    <div><label>Sign-in</label>
+      <select name="auth" data-auth-mode>
+        {% for k, v in auth_modes.items() %}<option value="{{ k }}" {{ 'selected' if k == 'manual' }}>{{ v }}</option>{% endfor %}
+      </select></div>
+    <div data-auth-only="manual credentials"><label>Login page URL</label><input type="url" name="login_url" placeholder="https://portal.example.edu/login"></div>
+    <div><label>First page to check</label><input type="url" name="check_url" required placeholder="https://portal.example.edu/checklist"></div>
+    <div><label>Check name</label><input name="check_name" value="Registration checklist"></div>
+    <div><label>Watch for text <span class="hint">comma-separated, optional</span></label><input name="check_watch" placeholder="hold, missing, deadline"></div>
+    <div><label>College <span class="hint">optional</span></label>
+      <select name="college_id"><option value="">—</option>{% for c in colleges %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="actions"><button type="submit">Add site</button>
+    <span class="hint">Only add sites and accounts you are allowed to access, and respect each site's terms.</span></div>
+</form>
+
+<h2>Import logins from Chrome</h2>
+<form class="card" method="post" action="{{ url_for('import_chrome_passwords') }}" enctype="multipart/form-data">
+  {{ csrf() }}
+  <p class="muted small">Export from <code>chrome://password-manager/settings</code> → “Download file”, upload it here, then delete the CSV —
+  it contains every password in plain text. Each login becomes a site; add the pages to check afterwards.</p>
+  <input type="file" name="csv_file" accept=".csv" required>
+  <label class="check"><input type="checkbox" name="save_credentials"> Also save the usernames/passwords to <code>credentials.toml</code></label>
+  <div class="actions"><button type="submit">Import</button></div>
+</form>
+
+<h2>Chrome profile (optional)</h2>
+<form class="card" method="post" action="{{ url_for('chrome_profiles_select') }}">
+  {{ csrf() }}
+  <p class="muted small">Checks can run inside one of your Chrome profiles so its saved passwords and existing sign-ins are used.
+  Chrome must be closed while a check runs. Currently: {% if chrome_dir %}<code>{{ chrome_dir }}</code> / <code>{{ chrome_profile or 'Default' }}</code>{% else %}not used{% endif %}.</p>
+  <label>Chrome User Data directory</label>
+  <input type="text" name="user_data_dir" id="user_data_dir" value="{{ chrome_dir }}" placeholder="C:/Users/you/AppData/Local/Google/Chrome/User Data">
+  <label>Profile</label>
+  <select name="profile" id="profile_select"><option value="{{ chrome_profile }}">{{ chrome_profile or '-- detect profiles --' }}</option></select>
+  <p class="muted small" id="profile_status"></p>
+  <div class="actions">
+    <button type="button" class="secondary" id="detect-profiles">Auto-detect profiles</button>
+    <button type="submit">Use this profile</button>
+    {% if chrome_dir %}<button type="submit" name="clear" value="1" class="danger">Stop using Chrome profile</button>{% endif %}
+  </div>
+</form>
+{% endblock %}

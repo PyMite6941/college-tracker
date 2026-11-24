@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, here, ext, status_pill, post_button with context %}
+{% block title %}{{ site.name }} — College Tracker{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('sites') }}">&larr; All sites</a></p>
+<div class="row spread">
+  <h1>{{ site.name }} <code>{{ site.id }}</code></h1>
+  <form method="post" action="{{ url_for('run_checks') }}">{{ csrf() }}{{ here() }}<input type="hidden" name="site_id" value="{{ site.id }}">
+    <button type="submit" {{ 'disabled' if job.running or site.errors }}>Run this site's checks</button></form>
+</div>
+{% if site.errors %}<div class="flash error">Configuration problems: {{ site.errors|join(' ') }}</div>{% endif %}
+
+<h2>Checks</h2>
+<p class="muted small">Each check opens one page (read-only) and saves its text. Selectors pick the part of the page to keep
+(the first visible match wins). Watched text raises an alert when it appears or disappears.</p>
+{% for c in site.checks %}
+  {% set r = results.get(c.id) %}
+  <div class="card">
+    <div class="row spread">
+      <div><b>{{ c.name }}</b> <code>{{ c.id }}</code> {% if r %}{{ status_pill(r.status) }}{% endif %}
+        <div class="muted small">{{ ext(c.url) }}{% if r %} · checked {{ r.checked_at|when }}{% endif %}</div></div>
+      <div class="row">
+        <a class="btn secondary small" href="{{ url_for('check_history', site_id=site.id, check_id=c.id) }}">History</a>
+        {{ post_button(url_for('delete_check', site_id=site.id, check_id=c.id), 'Remove', 'danger small', confirm='Remove check ' ~ c.name ~ '?') }}
+      </div>
+    </div>
+    {% if r and r.error %}<div class="flash error small mt">{{ r.error }}</div>{% endif %}
+    <details class="mt"><summary>Edit check</summary>
+      <form method="post" action="{{ url_for('edit_check', site_id=site.id, check_id=c.id) }}">
+        {{ csrf() }}
+        <div class="fields">
+          <div><label>Name</label><input name="name" value="{{ c.name }}" required></div>
+          <div><label>Page URL</label><input type="url" name="url" value="{{ c.url }}" required></div>
+          <div><label>Wait for selector <span class="hint">optional</span></label><input name="wait_for" value="{{ c.wait_for or '' }}"></div>
+        </div>
+        <label>Content selectors <span class="hint">one per line</span></label>
+        <textarea name="selectors">{{ c.selectors|join('\n') }}</textarea>
+        <label>Watch for text <span class="hint">one per line or comma-separated</span></label>
+        <textarea name="watch">{{ c.watch|join('\n') }}</textarea>
+        <div class="actions"><button type="submit">Save check</button></div>
+      </form>
+    </details>
+  </div>
+{% else %}
+  <p class="notice">No checks yet — add the first page to read below.</p>
+{% endfor %}
+
+<form class="card mt" method="post" action="{{ url_for('add_check', site_id=site.id) }}">
+  {{ csrf() }}
+  <h3>Add a check</h3>
+  <div class="fields">
+    <div><label>Name</label><input name="name" required placeholder="Financial aid status"></div>
+    <div><label>Page URL</label><input type="url" name="url" required placeholder="https://portal.example.edu/aid"></div>
+    <div><label>Wait for selector <span class="hint">optional</span></label><input name="wait_for" placeholder="#status-table"></div>
+  </div>
+  <label>Content selectors <span class="hint">one per line; blank uses main/body</span></label>
+  <textarea name="selectors" placeholder="main&#10;.status-panel"></textarea>
+  <label>Watch for text <span class="hint">optional</span></label>
+  <textarea name="watch" placeholder="hold&#10;missing document"></textarea>
+  <div class="actions"><button type="submit">Add check</button></div>
+</form>
+
+<h2>Site settings</h2>
+<form class="card" method="post" action="{{ url_for('edit_site', site_id=site.id) }}">
+  {{ csrf() }}
+  <div class="fields">
+    <div><label>Display name</label><input name="name" value="{{ site.name }}" required></div>
+    <div><label>Sign-in</label>
+      <select name="auth" data-auth-mode>{% for k, v in auth_modes.items() %}<option value="{{ k }}" {{ 'selected' if site.auth == k }}>{{ v }}</option>{% endfor %}</select></div>
+    <div data-auth-only="manual credentials"><label>Login page URL</label><input type="url" name="login_url" value="{{ site.login_url or '' }}"></div>
+    <div><label>College</label>
+      <select name="college_id"><option value="">—</option>{% for c in colleges %}<option value="{{ c.id }}" {{ 'selected' if site.college_id == c.id }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div data-auth-only="manual credentials"><label>Session max age (days) <span class="hint">blank = default</span></label>
+      <input type="number" min="0" name="session_max_age_days" value="{{ site.session_max_age_days or '' }}"></div>
+    <div><label>Chrome profile <span class="hint">optional, overrides global</span></label><input name="chrome_profile" value="{{ site.chrome_profile or '' }}" placeholder="Default"></div>
+  </div>
+  <fieldset data-auth-only="credentials"><legend>Login form</legend>
+    <p class="hint">Credentials come from the Sites page (credentials.toml) or, as a fallback, these .env variables.</p>
+    <div class="fields">
+      <div><label>Username env var</label><input name="user_env" value="{{ site.user_env or '' }}" placeholder="STATE_U_USER"></div>
+      <div><label>Password env var</label><input name="pass_env" value="{{ site.pass_env or '' }}" placeholder="STATE_U_PASS"></div>
+      <div><label>Username selector</label><input name="sel_username" value="{{ site.selectors.username or '' }}" placeholder="default"></div>
+      <div><label>Password selector</label><input name="sel_password" value="{{ site.selectors.password or '' }}" placeholder="default"></div>
+      <div><label>Submit selector</label><input name="sel_submit" value="{{ site.selectors.submit or '' }}" placeholder="default"></div>
+    </div>
+  </fieldset>
+  <div class="actions"><button type="submit">Save site</button></div>
+</form>
+{% endblock %}

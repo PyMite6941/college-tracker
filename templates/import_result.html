@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Import results — College Tracker{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('sites') }}">&larr; Sites</a></p>
+<h1>Import results</h1>
+<div class="flash ok">Imported {{ imported|length }} new site{{ 's' if imported|length != 1 }}{% if skipped_count %} ({{ skipped_count }} skipped as duplicates){% endif %}.</div>
+<div class="notice">Delete the exported CSV now — it holds your passwords in plain text.</div>
+{% if saved_secrets %}
+  <p>Usernames and passwords were saved to <code>credentials.toml</code> (local, gitignored).</p>
+{% elif env_lines %}
+  <p>Either save credentials per site on the Sites page, or add these lines to <code>.env</code> and fill in the values:</p>
+  <pre>{{ env_lines }}</pre>
+{% endif %}
+<h2>Next: add the pages to check</h2>
+<ul class="list">{% for s in imported %}<li><a href="{{ url_for('edit_site', site_id=s.id) }}">{{ s.name }}</a> <code>{{ s.id }}</code></li>{% endfor %}</ul>
+<p><a class="btn" href="{{ url_for('sites') }}">Done</a></p>
+{% endblock %}

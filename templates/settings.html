@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, post_button with context %}
+{% block title %}Settings — College Tracker{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<section class="card mt">
+  <h3>Automation</h3>
+  <p class="small muted">Runs jobs on a timer while this website is open. 0 turns a job off. Jobs never overlap. For runs while the site
+    is closed, schedule <code>python run.py auto</code> in Task Scheduler or cron, which runs whatever is due and then exits.</p>
+  <form method="post" action="{{ url_for('save_schedule') }}">
+    {{ csrf() }}
+    <div class="fields">
+      <div><label>Run all portal checks every <span class="hint">hours</span></label>
+        <input name="check_hours" value="{{ sched.check_hours|round(1) if sched.check_hours else 0 }}" inputmode="decimal"></div>
+      <div><label>Sync college email every <span class="hint">hours</span></label>
+        <input name="email_hours" value="{{ sched.email_hours|round(1) if sched.email_hours else 0 }}" inputmode="decimal"></div>
+      <div><label class="check"><input type="checkbox" name="reminders" {{ 'checked' if sched.reminders }}> Record due reminders automatically</label></div>
+    </div>
+    <div class="actions"><button type="submit">Save automation</button></div>
+  </form>
+  <dl class="kv mt">
+    <dt>Last check run</dt><dd>{{ sched.last.get('checks')|when }}{% if next_check %} · next {{ next_check|when }}{% endif %}</dd>
+    <dt>Last email sync</dt><dd>{{ sched.last.get('email')|when }}{% if next_email %} · next {{ next_email|when }}{% endif %}</dd>
+  </dl>
+</section>
+<p class="muted mt">The settings below are read from <code>.env</code>. Edit that file and restart the app to change them.</p>
+<div class="grid">
+  <section class="card">
+    <h3>Notifications (opt-in)</h3>
+    {% if notify.enabled %}
+      <p><span class="pill ok">On</span> Sending <b>{{ notify.kinds|sort|join(', ') }}</b> alerts as <code>{{ notify.format }}</code>.</p>
+    {% elif notify.error %}
+      <p><span class="pill error">Misconfigured</span> {{ notify.error }}</p>
+    {% else %}
+      <p><span class="pill">Off</span> Alerts only appear on the dashboard.</p>
+    {% endif %}
+    <p class="small muted">Set <code>NOTIFY_WEBHOOK_URL</code> (https), <code>NOTIFY_FORMAT</code> (json, discord, slack or ntfy) and
+    <code>NOTIFY_ON</code> (any of change, watch, reauth, error, reminder, email).</p>
+    {{ post_button(url_for('test_notification'), 'Send test notification', 'secondary small') }}
+  </section>
+  <section class="card">
+    <h3>History retention</h3>
+    <dl class="kv"><dt>Max runs per check</dt><dd>{{ max_runs }} <code>HISTORY_MAX_RUNS</code></dd>
+      <dt>Max age</dt><dd>{{ max_days }} days <code>HISTORY_MAX_DAYS</code> (0 = forever)</dd></dl>
+  </section>
+  <section class="card">
+    <h3>Sign-in &amp; browser</h3>
+    <dl class="kv"><dt>Session max age</dt><dd>{{ session_days }} days <code>SESSION_MAX_AGE_DAYS</code></dd>
+      <dt>Checks run</dt><dd>{{ 'headless' if headless else 'in a visible browser' }} <code>PLAYWRIGHT_HEADLESS</code></dd>
+      <dt>Local network targets</dt><dd>{{ 'allowed' if allow_local else 'blocked' }} <code>ALLOW_LOCAL_TARGETS</code></dd></dl>
+  </section>
+  <section class="card">
+    <h3>Reminders</h3>
+    <p class="small muted">Reminders are off unless you tick “Remind me” on a task or visit. They're recorded after every check run,
+    when you click below, or by a scheduled <code>python run.py remind</code>.</p>
+    {{ post_button(url_for('send_reminders'), 'Record due reminders now', 'secondary small') }}
+  </section>
+</div>
+{% endblock %}
